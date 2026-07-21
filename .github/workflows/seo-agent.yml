@@ -1,0 +1,119 @@
+name: Agent SEO quotidien
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # ≈ 6h heure de Paris
+  workflow_dispatch:
+    inputs:
+      delivery_mode:
+        description: Mode de livraison
+        type: choice
+        options: [pr, push]
+        default: pr
+
+# pr = pull request à relire | push = merge automatique sur main.
+# Passer à "push" ici après la période d'essai de 3 jours.
+env:
+  DELIVERY_MODE: pr
+  GSC_SITE_URL: sc-domain:theklope.com
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seo-agent
+  cancel-in-progress: false
+
+jobs:
+  seo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout SEOTHEKLOPE (agent)
+        uses: actions/checkout@v4
+        with:
+          path: agent-repo
+
+      - name: Checkout theklope (site)
+        uses: actions/checkout@v4
+        with:
+          repository: craigbarns/theklope
+          token: ${{ secrets.THEKLOPE_TOKEN }}
+          path: site
+          fetch-depth: 0
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Résoudre le mode de livraison
+        run: echo "MODE=${{ inputs.delivery_mode || env.DELIVERY_MODE }}" >> "$GITHUB_ENV"
+
+      - name: Données Search Console (mode dégradé si absentes)
+        env:
+          GSC_CREDENTIALS: ${{ secrets.GSC_CREDENTIALS }}
+        run: node agent-repo/scripts/fetch-gsc.mjs > gsc-data.json || echo '{}' > gsc-data.json
+
+      - name: Config git des deux clones
+        run: |
+          for d in site agent-repo; do
+            git -C "$d" config user.name "seo-agent"
+            git -C "$d" config user.email "seo-agent@users.noreply.github.com"
+          done
+
+      - name: Installer Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run de l'agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: claude -p "$(cat agent-repo/agent/PROMPT.md)" --dangerously-skip-permissions --model claude-sonnet-5
+
+      - name: Vérification build + tests du site
+        id: verify
+        continue-on-error: true
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+          npm test --if-present
+
+      - name: Livraison sur theklope
+        env:
+          GH_TOKEN: ${{ secrets.THEKLOPE_TOKEN }}
+        working-directory: site
+        run: |
+          COMMITS=$(git rev-list origin/main..HEAD --count)
+          if [ "$COMMITS" -eq 0 ]; then
+            echo "Aucune modification produite aujourd'hui." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "${{ steps.verify.outcome }}" = "success" ] && [ "$MODE" = "push" ]; then
+            git push origin HEAD:main
+            echo "✅ Poussé sur main de theklope ($COMMITS commit(s)) — déploiement Vercel en cours." >> "$GITHUB_STEP_SUMMARY"
+          else
+            BRANCH="seo/$(date +%Y-%m-%d)"
+            git checkout -b "$BRANCH"
+            git push origin "$BRANCH" --force
+            gh pr create --repo craigbarns/theklope \
+              --base main --head "$BRANCH" \
+              --title "SEO du jour — $(date +%d/%m/%Y)" \
+              --body "$(git log origin/main.."$BRANCH" --pretty='- %s')
+
+          Build/tests : ${{ steps.verify.outcome }}. PR générée par l'agent SEO.
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)" \
+              || echo "PR déjà existante pour $BRANCH"
+            echo "📝 PR ouverte sur theklope (build/tests : ${{ steps.verify.outcome }})." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Sauvegarder le journal de l'agent
+        if: always()
+        working-directory: agent-repo
+        run: |
+          git add agent/
+          git diff --cached --quiet && exit 0
+          git commit -m "journal: run du $(date +%F)" || true
+          git pull --rebase origin main
+          git push origin main
