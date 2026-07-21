@@ -5,7 +5,6 @@ elle est traitée (la déplacer dans le JOURNAL).
 
 ## Pages de contenu à créer
 
-- [ ] Guide : comment choisir sa résistance (ohms, watts, compatibilité)
 - [ ] Guide : pod ou kit débutant, comment choisir son premier matériel
 - [ ] Guide : comprendre les taux de nicotine et les sels de nicotine (factuel)
 - [ ] Glossaire de la vape (termes techniques expliqués)

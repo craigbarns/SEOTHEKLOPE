@@ -113,7 +113,10 @@ jobs:
         working-directory: agent-repo
         run: |
           git add agent/
-          git diff --cached --quiet && exit 0
-          git commit -m "journal: run du $(date +%F)" || true
-          git pull --rebase origin main
-          git push origin main
+          git diff --cached --quiet || git commit -m "journal: run du $(date +%F)"
+          if [ "$(git rev-list origin/main..HEAD --count)" -gt 0 ]; then
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "Rien à sauvegarder."
+          fi
