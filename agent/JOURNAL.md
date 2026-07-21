@@ -15,7 +15,7 @@ entrées passées.
 ---
 
 ### 2026-07-21 — [type : contenu]
-- **Fait** : guide « comment choisir sa résistance » (run d'essai, livré en PR #23 sur theklope, en attente de relecture par Gregory)
+- **Fait** : guide « comment choisir sa résistance » (run d'essai, PR #23 mergée sur main le 2026-07-21, publié)
 - **Pourquoi** : première idée du backlog contenu ; run d'essai en mode PR
 - **Fichiers** : `src/data/blog.js`, `public/llms-full.txt`
 - **Suite** : vérifier si la PR #23 a été mergée avant d'enchaîner ; prochaine idée backlog ou opportunité GSC
