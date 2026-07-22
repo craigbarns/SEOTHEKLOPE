@@ -5,17 +5,28 @@ elle est traitée (la déplacer dans le JOURNAL).
 
 ## Pages de contenu à créer
 
-- [ ] Guide : pod ou kit débutant, comment choisir son premier matériel
-- [ ] Guide : comprendre les taux de nicotine et les sels de nicotine (factuel)
-- [ ] Glossaire de la vape (termes techniques expliqués)
-- [ ] Guide : entretenir sa cigarette électronique (nettoyage, remplacement)
+- [ ] Guide dédié à l'entretien d'un kit classique / box (nettoyage, joints,
+      contacts) — `entretenir-pod-rechargeable` couvre déjà les pods, mais
+      pas les kits tubulaires/box
+- [ ] Vérifier s'il manque un guide sur le stockage des e-liquides et
+      batteries (sécurité, conditions de conservation)
+
+Note (2026-07-22) : plusieurs idées de contenu de ce backlog étaient déjà
+couvertes par des articles existants dans `src/data/blog.js` (20 guides déjà
+publiés) : « pod ou kit débutant » ≈ `quelle-cigarette-electronique-choisir`,
+« taux de nicotine » = `choisir-taux-nicotine-e-liquide`, « glossaire » =
+`lexique-vape`, « entretien » (pods) = `entretenir-pod-rechargeable`. Elles
+ont été retirées. Vérifier `src/data/blog.js` avant de proposer un nouveau
+guide pour éviter le doublon.
 
 ## Optimisations repérées
 
-- [ ] Vérifier que chaque catégorie de `categorySeo.js` a une meta
-      description unique de 140-160 caractères
-- [ ] Maillage interne : lier les pages SEO statiques entre elles et vers
-      les catégories
+- [ ] Meta descriptions `categorySeo.js` sous 140 caractères : `nouveautes`
+      (135) et `meilleures-ventes` (139) — allonger légèrement pour rentrer
+      dans la fourchette 140-160 (les 8 autres catégories sont déjà bonnes)
+- [ ] Étendre le maillage interne : les pages `staticSeoPages.js` ne
+      linkent pas encore vers les guides `blog.js` (et inversement) — après
+      le maillage guide↔guide fait le 2026-07-22, prochaine étape naturelle
 
 ## Technique
 
