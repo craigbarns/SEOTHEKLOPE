@@ -5,9 +5,6 @@ elle est traitée (la déplacer dans le JOURNAL).
 
 ## Pages de contenu à créer
 
-- [ ] Guide dédié à l'entretien d'un kit classique / box (nettoyage, joints,
-      contacts) — `entretenir-pod-rechargeable` couvre déjà les pods, mais
-      pas les kits tubulaires/box
 - [ ] Vérifier s'il manque un guide sur le stockage des e-liquides et
       batteries (sécurité, conditions de conservation)
 
@@ -24,11 +21,21 @@ guide pour éviter le doublon.
 - [ ] Meta descriptions `categorySeo.js` sous 140 caractères : `nouveautes`
       (135) et `meilleures-ventes` (139) — allonger légèrement pour rentrer
       dans la fourchette 140-160 (les 8 autres catégories sont déjà bonnes)
-- [ ] Étendre le maillage interne : les pages `staticSeoPages.js` ne
-      linkent pas encore vers les guides `blog.js` (et inversement) — après
-      le maillage guide↔guide fait le 2026-07-22, prochaine étape naturelle
+- [ ] Étendre le maillage interne : seule `conformite-vape` (dans
+      `staticSeoPages.js`) linke aujourd'hui vers un guide
+      (`reglementation-vape-france`) ; `boutique-vape-marseille`,
+      `cigarette-electronique-marseille` et `livraison-retours` n'en ont
+      aucun, et aucun guide `blog.js` ne linke vers une page
+      `staticSeoPages.js` en retour
 
 ## Technique
 
 - [ ] Vérifier que toutes les pages du sitemap répondent en 200
 - [ ] Valider le JSON-LD des pages existantes (schema.org)
+
+## À vérifier
+
+- [ ] Le commit `efc312a` (maillage interne guide↔guide, run du
+      2026-07-22) est resté sur la branche `seo/2026-07-22`, pas encore
+      mergé sur `main` au 2026-07-23 — vérifier son statut avant de refaire
+      du travail sur le même sujet

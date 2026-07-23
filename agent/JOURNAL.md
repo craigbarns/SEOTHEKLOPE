@@ -14,6 +14,31 @@ entrées passées.
 
 ---
 
+### 2026-07-23 — [type : contenu]
+- **Fait** : nouveau guide « Entretenir un kit classique ou une box de
+  cigarette électronique » (`entretenir-kit-classique-box`) : nettoyage du
+  clearomiseur, joints (o-rings), pas de vis 510/contacts, stockage de la
+  box et de la batterie. Ajouté aussi au maillage produit → guides
+  (`productGuides.js`, catégorie `ecig`).
+- **Pourquoi** : `gsc-data.json` toujours vide, donc pas d'opportunité
+  chiffrée. Le backlog notait explicitement ce trou de contenu :
+  `entretenir-pod-rechargeable` couvre les pods mais aucun guide ne
+  couvrait l'entretien d'un kit tubulaire/box, alors que la mission place
+  le contenu longue traîne en priorité 1 et que le dernier run (2026-07-22)
+  était déjà de l'optimisation (maillage guide↔guide).
+- **Fichiers** : `src/data/blog.js`, `src/data/productGuides.js`,
+  `public/llms-full.txt` (régénéré par le build)
+- **Suite** : à noter — le commit `efc312a` (maillage interne guide↔guide,
+  run du 2026-07-22) n'est pas encore sur `main` (branche
+  `seo/2026-07-22` non mergée) ; vérifier son état avant d'enchaîner sur le
+  même sujet. Prochaines pistes backlog : meta descriptions
+  `categorySeo.js` (`nouveautes`, `meilleures-ventes`) sous 140 caractères ;
+  maillage `staticSeoPages.js` ↔ `blog.js` (seule `conformite-vape` linke
+  vers un guide aujourd'hui) ; vérifier l'opportunité d'un guide sur le
+  stockage e-liquides/batteries.
+
+---
+
 ### 2026-07-22 — [type : optimisation]
 - **Fait** : maillage interne entre guides `blog.js` — ajout de
   `getRelatedPosts(slug)` (mêmes catégories) et d'un bloc « Guides
