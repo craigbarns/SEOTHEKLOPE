@@ -14,6 +14,37 @@ entrées passées.
 
 ---
 
+### 2026-07-24 — [type : optimisation]
+- **Fait** : allongé les meta descriptions `nouveautes` (135→152) et
+  `meilleures-ventes` (139→157 caractères) dans `categorySeo.js` pour
+  rentrer dans la fourchette 140-160 des 8 autres catégories.
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Item déjà identifié
+  et chiffré dans le backlog ; vérifié que la mesure était toujours
+  valable avant d'agir. Un audit préalable (crawl des liens internes via
+  `scripts/crawl-links.mjs`, absent du build mais existant dans le repo :
+  0 lien cassé sur 4592 vérifiés ; validation du JSON-LD sur les 359 pages
+  pré-rendues : tous les types présents — Product, BlogPosting, FAQPage,
+  LocalBusiness, CollectionPage, WebSite, Organization — bien formés, le
+  pattern `@graph` avec `@context` au niveau racine est correct et n'est
+  pas une erreur) n'a rien trouvé d'autre à corriger, donc bascule sur
+  cette optimisation déjà qualifiée par le backlog.
+- **Fichiers** : `src/data/categorySeo.js`
+- **Suite** : important — les branches `seo/2026-07-22` (maillage
+  guide↔guide) et `seo/2026-07-23` (guide entretien kit classique/box)
+  n'étaient **toujours pas mergées sur `main`** au 2026-07-24 ; le code
+  correspondant (`getRelatedPosts`, `entretenir-kit-classique-box`)
+  n'existe pas sur `main`. À vérifier avant tout nouveau run sur ces
+  sujets pour éviter un doublon si elles finissent par être mergées.
+  Note aussi : `main` contient plusieurs PR (#25 à #35, schéma local,
+  IndexNow, maillage produit→guides, guide backlinks, etc.) non tracées
+  dans ce journal — probablement un autre processus/agent sur ce repo
+  partagé ; à garder en tête en cas d'incohérence entre journal et code.
+  Pistes backlog restantes : maillage `staticSeoPages.js` ↔ `blog.js`
+  (aucun guide ne linke vers une page statique en retour, sauf
+  `conformite-vape`) ; guide stockage e-liquides/batteries à vérifier.
+
+---
+
 ### 2026-07-23 — [type : contenu]
 - **Fait** : nouveau guide « Entretenir un kit classique ou une box de
   cigarette électronique » (`entretenir-kit-classique-box`) : nettoyage du
