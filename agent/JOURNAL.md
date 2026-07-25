@@ -14,6 +14,39 @@ entrées passées.
 
 ---
 
+### 2026-07-25 — [type : contenu]
+- **Fait** : nouveau guide « Comment bien conserver ses e-liquides et sa
+  batterie ? » (`stockage-eliquides-batterie-vape`, catégorie Entretien) :
+  protection des e-liquides contre la chaleur/lumière, entretien de la
+  batterie intégrée (charge USB-C), préparation d'une pause d'utilisation.
+  FAQ + produits associés (2 e-liquides + un kit à batterie intégrée).
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Item explicitement
+  identifié dans le backlog (« vérifier s'il manque un guide sur le
+  stockage des e-liquides et batteries ») ; vérifié dans `blog.js` (21
+  slugs) qu'aucun des 21 guides existants ne couvrait ce sujet — seul
+  `erreurs-frequentes-debutant-vape` le mentionne dans sa meta description
+  sans le traiter dans le corps. Dernier run (2026-07-24) étant de
+  l'optimisation, contenu logique pour respecter le rythme mission.
+- **Fichiers** : `src/data/blog.js`, `public/llms-full.txt` (régénéré par
+  le build)
+- **Suite** : les branches `seo/2026-07-22` (maillage guide↔guide,
+  `getRelatedPosts`) et `seo/2026-07-23` (guide entretien kit
+  classique/box) sont **toujours pas mergées sur `main`** au 2026-07-25 —
+  vérifié à nouveau (`getRelatedPosts` absent de `src/`,
+  `entretenir-kit-classique-box` absent de `blog.js`). Ne pas refaire ce
+  travail avant d'avoir confirmé leur statut. Pistes backlog restantes :
+  maillage `staticSeoPages.js` ↔ `blog.js` (toujours aucun lien retour
+  d'un guide vers une page statique) ; envisager d'ajouter
+  `stockage-eliquides-batterie-vape` au maillage produit → guides
+  (`productGuides.js`, catégories `eliquide`/`ecig`/`pod`) lors d'un
+  prochain run d'optimisation, sans dépasser la limite de 3 guides
+  affichés par catégorie.
+- **Vérifié** : `npm ci`, `npm run build` (22 articles pré-rendus),
+  `npm test` (144/144), `node scripts/crawl-links.mjs` (0 lien cassé /
+  4601 vérifiés) — tous verts.
+
+---
+
 ### 2026-07-24 — [type : optimisation]
 - **Fait** : allongé les meta descriptions `nouveautes` (135→152) et
   `meilleures-ventes` (139→157 caractères) dans `categorySeo.js` pour
