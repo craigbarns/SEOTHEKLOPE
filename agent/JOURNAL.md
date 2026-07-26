@@ -14,6 +14,54 @@ entrées passées.
 
 ---
 
+### 2026-07-26 — [type : optimisation]
+- **Fait** : maillage interne entre 2 pages `staticSeoPages.js` et 2 guides
+  `blog.js`. Ajouté un lien vers le guide `compatibilite-resistances-cartouches`
+  dans les `links` de `boutique-vape-marseille`, et un lien vers le guide
+  `livraison-produits-vape-france` dans les `links` de `livraison-retours`.
+  En retour, ajouté un lien inline (`<a href="...">`) dans le corps de
+  chacun de ces deux guides vers la page statique correspondante. Comme
+  aucun style n'existait pour les liens inline dans le corps des articles
+  (`BlogPost.jsx`), ajouté une règle Tailwind `[&_a]` (couleur neon,
+  souligné) pour que ces liens ne s'affichent pas en bleu par défaut.
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Backlog identifiait
+  explicitement ce trou de maillage (mission priorité 2). Vérification
+  faite avant d'agir : le backlog datait du 2026-07-25 et affirmait que
+  `cigarette-electronique-marseille` n'avait aucun lien vers un guide —
+  faux aujourd'hui, ce lien existe déjà sur `main` (probablement ajouté par
+  une des PR #25-#35 mergées entre-temps, non tracées dans ce journal). Il
+  ne restait donc que `boutique-vape-marseille` et `livraison-retours` sans
+  lien vers un guide. Pour le sens retour (guide → page statique), vérifié
+  que `sections[].text`/`faq[].a` de `staticSeoPages.js` sont rendus en
+  texte échappé par React (pas de HTML possible côté page statique), alors
+  que le contenu des guides (`blog.js`) passe par `dangerouslySetInnerHTML`
+  et supporte donc un `<a>` inline — d'où le choix d'ajouter les liens
+  retour côté guide uniquement.
+  Avant de choisir cette tâche, audit rapide sans rien à corriger : build,
+  `npm test` (144/144) et `node scripts/crawl-links.mjs` (0 lien cassé /
+  4592 vérifiés) déjà verts sur `main` avant modification.
+- **Fichiers** : `src/data/staticSeoPages.js`, `src/data/blog.js`,
+  `src/pages/BlogPost.jsx`
+- **Suite** : les branches `seo/2026-07-22` à `seo/2026-07-25` (maillage
+  guide↔guide `getRelatedPosts`, guide entretien kit classique/box, guide
+  stockage e-liquides/batteries) sont **toujours pas mergées sur `main`**
+  au 2026-07-26 — à vérifier avant de refaire ce travail. Maillage restant
+  dans le backlog : `conformite-vape` et `cigarette-electronique-marseille`
+  ont un lien vers un guide mais aucun des guides correspondants
+  (`reglementation-vape-france`, `quelle-cigarette-electronique-choisir`)
+  ne linke en retour vers la page statique — même limitation technique
+  (texte échappé côté page statique) à garder en tête, mais le lien retour
+  côté guide reste possible comme fait aujourd'hui. Attention : re-vérifier
+  l'état du backlog à chaque run, plusieurs de ses constats se sont révélés
+  périmés à cause des PR non tracées (#25-#35) sur ce repo partagé.
+- **Vérifié** : `npm ci`, `npm run build` (359 pages pré-rendues dont les 2
+  guides et 2 pages modifiées), `npm test` (144/144),
+  `node scripts/crawl-links.mjs` (0 lien cassé / 4596 vérifiés) — tous
+  verts. Vérifié aussi dans `dist/` que les 2 `<a href>` inline sont bien
+  présents dans le HTML pré-rendu des guides.
+
+---
+
 ### 2026-07-25 — [type : contenu]
 - **Fait** : nouveau guide « Comment bien conserver ses e-liquides et sa
   batterie ? » (`stockage-eliquides-batterie-vape`, catégorie Entretien) :
