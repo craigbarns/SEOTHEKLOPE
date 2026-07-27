@@ -14,6 +14,57 @@ entrées passées.
 
 ---
 
+### 2026-07-27 — [type : optimisation]
+- **Fait** : maillage interne restant entre `staticSeoPages.js` et
+  `blog.js` — ajouté un lien inline dans le corps du guide
+  `reglementation-vape-france` vers la page statique `conformite-vape`, et
+  un lien inline dans le corps du guide `quelle-cigarette-electronique-choisir`
+  vers la page statique `cigarette-electronique-marseille`. Ces deux pages
+  statiques linkaient déjà vers leur guide respectif (sens page → guide)
+  mais aucun lien retour n'existait (sens guide → page). Ajouté aussi la
+  règle Tailwind `[&_a]` dans `BlogPost.jsx` pour styliser ces liens
+  inline (couleur neon, souligné) — absente sur `main` avant ce run.
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Avant de choisir
+  cette tâche, vérifié l'état réel de `main` (pas seulement le backlog) :
+  les 5 branches `seo/2026-07-22` à `seo/2026-07-26` existent toujours sur
+  le remote mais ne sont **toujours pas mergées sur `main`**, qui n'a pas
+  bougé depuis la PR #35 (harmonisation du nom de marque). Confirmé par
+  `git diff` que chacune de ces 5 branches est basée sur le même commit
+  `9e0db8d` (pas empilées les unes sur les autres) : ce sont bien 5 runs
+  distincts dont le travail reste bloqué en dehors de `main`. Vérifié
+  précisément le contenu de `seo/2026-07-26` (diff contre `9e0db8d`) : ce
+  run a traité **uniquement** la paire `boutique-vape-marseille` ↔
+  `compatibilite-resistances-cartouches` et `livraison-retours` ↔
+  `livraison-produits-vape-france`. La paire `conformite-vape` ↔
+  `reglementation-vape-france` et `cigarette-electronique-marseille` ↔
+  `quelle-cigarette-electronique-choisir`, identifiée dans le backlog,
+  n'avait donc été traitée par aucun run précédent (vérifié directement
+  dans `blog.js` sur `main` : aucun des deux guides ne contenait de lien
+  retour). Tâche choisie car élément de maillage interne concret et
+  déjà qualifié par le backlog, dans la continuité de la priorité 2 de la
+  mission. Audit rapide avant modification : build, tests (144/144) et
+  `crawl-links.mjs` (0 lien cassé / 4592 vérifiés) déjà verts sur `main`.
+- **Fichiers** : `src/data/blog.js`, `src/pages/BlogPost.jsx`
+- **Suite** : les 5 branches `seo/2026-07-22` à `seo/2026-07-26`
+  toujours **pas mergées sur `main`** au 2026-07-27 — à re-vérifier avant
+  tout nouveau run pour éviter un doublon si elles finissent par être
+  mergées d'un coup (elles contiennent : maillage guide↔guide
+  `getRelatedPosts`, guide entretien kit classique/box, meta descriptions
+  `categorySeo.js` nouveautes/meilleures-ventes, guide stockage
+  e-liquides/batteries, maillage boutique-marseille/livraison-retours ↔
+  guides). Avec le lien ajouté aujourd'hui, les 4 pages statiques de
+  `staticSeoPages.js` linkent maintenant chacune vers au moins un guide
+  qui linke en retour — le trou de maillage identifié dans le backlog
+  depuis plusieurs runs est donc comblé (sous réserve que les 5 branches
+  en attente ne soient jamais mergées ; si elles le sont, aucun conflit
+  attendu car elles touchent des paires de pages différentes).
+- **Vérifié** : `npm ci`, `npm run build` (359 pages pré-rendues),
+  `npm test` (144/144), `node scripts/crawl-links.mjs` (0 lien cassé /
+  4594 vérifiés) — tous verts. Vérifié dans `dist/` que les 2 `<a href>`
+  inline sont bien présents dans le HTML pré-rendu des guides.
+
+---
+
 ### 2026-07-26 — [type : optimisation]
 - **Fait** : maillage interne entre 2 pages `staticSeoPages.js` et 2 guides
   `blog.js`. Ajouté un lien vers le guide `compatibilite-resistances-cartouches`
