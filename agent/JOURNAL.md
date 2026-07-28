@@ -14,6 +14,54 @@ entrées passées.
 
 ---
 
+### 2026-07-28 — [type : audit]
+- **Fait** : audit technique complet (aucun run de type audit dans le
+  journal jusqu'ici, malgré la priorité 4 de la mission et le rythme
+  indicatif ~2 jours/semaine). Vérifié : sitemap (`generate-sitemap.mjs`,
+  `sitemap-data.mjs` — logique saine, dates ISO validées, pas d'URL
+  `undefined`/`null`), `robots.txt` (cohérent, disallow admin/checkout/
+  panier/favoris), canoniques (`Seo.jsx` — calcul par défaut origine+path
+  correct), JSON-LD (types bien formés sur les 359 pages pré-rendues),
+  liens internes (`crawl-links.mjs` : 0 cassé / 4592 vérifiés). Contrôle
+  systématique des longueurs de titres/meta descriptions sur les 3
+  fichiers de données SEO (`blog.js`, `categorySeo.js`,
+  `staticSeoPages.js`) via un script Node ad hoc : seules `nouveautes`
+  (135) et `meilleures-ventes` (139 caractères) étaient sous la fourchette
+  140-160 respectée par les 8 autres catégories — corrigées à 157 et 158
+  caractères, même style que l'existant (mention adultes, livraison
+  France). `cigarette-electronique-marseille` (161, static page) et 2
+  titres de guides (67-69 caractères) sont des dépassements mineurs,
+  laissés en l'état (pas assez significatifs pour justifier une
+  modification isolée).
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Constat du rythme :
+  les 7 dernières entrées du journal (2026-07-21 à 2026-07-27) sont
+  uniquement de type contenu/optimisation, jamais audit — écart avec la
+  mission (priorité 4, ~2 jours/semaine). L'écart de meta description
+  était déjà qualifié par le backlog/journal depuis le 2026-07-22 mais
+  jamais corrigé sur `main` car porté par la branche `seo/2026-07-24`,
+  toujours pas mergée. `main` est resté à `9e0db8d` (aucun changement
+  depuis le run du 07-27) — confirmé avant d'agir pour éviter tout
+  doublon.
+- **Fichiers** : `src/data/categorySeo.js`
+- **Suite** : les branches `seo/2026-07-22` à `seo/2026-07-27` (6
+  branches maintenant) existent toujours sur le remote sans être mergées
+  sur `main` — le mécanisme de merge semble bloqué structurellement ;
+  pourrait valoir la peine de signaler ce point à un humain si la
+  situation persiste encore plusieurs runs. Pistes techniques mineures
+  repérées mais non traitées : `cigarette-electronique-marseille`
+  (meta description à 161 caractères, 1 au-dessus du max) et les titres de
+  `alternatives-puffs-jetables` (69) / `autonomie-cigarette-electronique`
+  (67) légèrement longs — à regrouper dans un futur petit passage
+  d'optimisation si d'autres écarts similaires apparaissent, plutôt que
+  de faire un commit pour un seul caractère.
+- **Vérifié** : `npm ci`, `npm run build` (359 pages pré-rendues),
+  `npm test` (144/144), `node scripts/crawl-links.mjs` (0 lien cassé /
+  4592 vérifiés) — tous verts. Vérifié dans `dist/` que les 2 nouvelles
+  meta descriptions apparaissent bien dans le HTML pré-rendu des pages
+  catégorie concernées.
+
+---
+
 ### 2026-07-27 — [type : optimisation]
 - **Fait** : maillage interne restant entre `staticSeoPages.js` et
   `blog.js` — ajouté un lien inline dans le corps du guide

@@ -33,34 +33,46 @@ guide pour éviter le doublon.
       attention à la limite de 3 guides affichés par catégorie
       (`relatedGuidesForProduct`, limit=3) : ne pas juste l'ajouter en fin
       de liste sinon il ne s'affichera jamais
+- [x] Meta descriptions `nouveautes` et `meilleures-ventes` sous 140
+      caractères — **fait le 2026-07-28** directement sur `main` (audit
+      technique), sans attendre la branche `seo/2026-07-24` qui portait le
+      même correctif mais restait bloquée.
+- [ ] Mineur, non urgent : meta description `cigarette-electronique-marseille`
+      à 161 caractères (1 au-dessus du max 160) ; titres de guides
+      `alternatives-puffs-jetables` (69) et `autonomie-cigarette-electronique`
+      (67) légèrement longs. À regrouper avec d'autres écarts similaires
+      plutôt qu'un commit dédié pour si peu.
 
 ## Technique
 
-Vérifié le 2026-07-27 (avant le run de maillage interne) :
-`node scripts/crawl-links.mjs` sur `dist/` (0 lien cassé / 4592 puis 4594
-après modification, 359 pages pré-rendues, 21 articles), build et
-`npm test` (144/144) déjà verts sur `main` avant modification — rien à
-corriger pour l'instant. Refaire le contrôle après publication de contenus
-importants ou en cas de doute.
+Vérifié le 2026-07-28 (audit) : sitemap (`generate-sitemap.mjs` +
+`sitemap-data.mjs`), `robots.txt`, canoniques (`Seo.jsx`), JSON-LD (359
+pages pré-rendues), `node scripts/crawl-links.mjs` (0 lien cassé / 4592
+vérifiés), longueurs de titres/meta descriptions sur `blog.js`,
+`categorySeo.js`, `staticSeoPages.js` — tout vérifié, un seul écart
+significatif trouvé et corrigé (voir JOURNAL). Build et `npm test`
+(144/144) verts. Refaire un audit similaire dans ~1 semaine ou après
+publication de contenus importants.
 
 ## À vérifier
 
-- [ ] Les 5 branches `seo/2026-07-22` (maillage guide↔guide
-      `getRelatedPosts`), `seo/2026-07-23` (guide entretien kit
-      classique/box), `seo/2026-07-24` (meta descriptions
-      `categorySeo.js` nouveautes/meilleures-ventes), `seo/2026-07-25`
-      (guide stockage e-liquides/batteries) et `seo/2026-07-26` (maillage
-      boutique-marseille/livraison-retours ↔ guides) existent sur le
-      remote mais sont **toujours pas mergées sur `main` au 2026-07-27**
-      — confirmé qu'elles sont chacune basées sur le même commit `9e0db8d`
-      (5 runs distincts, pas empilés). Vérifier leur statut avant de
-      refaire du travail sur ces sujets (pas de doublon). En particulier,
-      les meta descriptions `nouveautes` (135 caractères) et
-      `meilleures-ventes` (139 caractères) de `categorySeo.js` sont
-      **toujours** sous la fourchette 140-160 sur `main` au 2026-07-27 —
-      la correction existe sur `seo/2026-07-24` mais n'est pas mergée ;
-      candidat direct pour un prochain run si la branche n'a toujours pas
-      bougé.
+- [ ] Les branches `seo/2026-07-22` à `seo/2026-07-27` (6 branches)
+      existent sur le remote mais sont **toujours pas mergées sur `main`
+      au 2026-07-28** — confirmé que `main` est resté à `9e0db8d` (aucun
+      changement depuis le run du 07-27). Vérifier leur statut avant de
+      refaire du travail sur ces sujets (pas de doublon) : maillage
+      guide↔guide `getRelatedPosts` (07-22), guide entretien kit
+      classique/box (07-23), meta descriptions `categorySeo.js` (07-24 —
+      **le même correctif a été refait directement sur `main` le
+      2026-07-28**, donc si cette branche est mergée un jour, un conflit
+      trivial est possible sur ces 2 lignes), guide stockage
+      e-liquides/batteries (07-25), maillage boutique-marseille/
+      livraison-retours ↔ guides (07-26), maillage conformite-vape/
+      cigarette-electronique-marseille ↔ guides (07-27). Le blocage dure
+      depuis plus d'une semaine sur 6 branches distinctes : si la
+      situation persiste encore après plusieurs runs, envisager de
+      signaler explicitement le problème plutôt que de continuer à
+      contourner au cas par cas.
 - [ ] `main` contient des PR (#25 à #35) non tracées dans ce journal
       (schéma local, IndexNow, maillage produit→guides, guide backlinks,
       harmonisation du nom de marque…) — probablement un autre
