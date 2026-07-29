@@ -14,6 +14,66 @@ entrées passées.
 
 ---
 
+### 2026-07-29 — [type : optimisation]
+- **⚠️ Constat prioritaire (non lié au diff du jour)** : la cause probable
+  du blocage signalé depuis le 2026-07-24 a été identifiée. Le workflow
+  `agent-repo/.github/workflows/seo-agent.yml` a `DELIVERY_MODE: pr` (ligne
+  17), avec un commentaire explicite en ligne 15 : « Passer à "push" ici
+  après la période d'essai de 3 jours. » Le premier run date du 2026-07-21
+  (PR #23) : la période d'essai de 3 jours est donc dépassée depuis
+  longtemps (8 jours). Confirmé avec `git merge-base --is-ancestor` :
+  **aucune** des 7 branches `seo/2026-07-22` à `seo/2026-07-28` n'est
+  ancêtre de `main` — 0 des 7 derniers runs SEO n'a atteint la prod, alors
+  que `main` a avancé de 20+ commits sur la même période via d'autres PR
+  (#25 à #42, un autre processus/agent). Résultat concret : tout le travail
+  content/maillage des runs 07-22 à 07-27 (guides, maillage interne,
+  meta descriptions) reste invisible sur le site en ligne. Recommandation
+  pour un humain : soit fusionner (ou fermer si obsolètes) les PR
+  `seo/2026-07-22` à `seo/2026-07-28` sur `craigbarns/theklope`, soit
+  repasser `DELIVERY_MODE` à `push` dans le workflow si la qualité des
+  runs passés est jugée suffisante — les deux ne s'excluent pas. Je n'ai
+  pas modifié ce paramètre moi-même : c'est un changement de pipeline de
+  livraison vers la prod d'un site e-commerce, à valider par un humain.
+- **Fait** : dans `src/data/productGuides.js`, `relatedGuidesForProduct()`
+  avait un `limit` par défaut de 3, mais `GUIDES_BY_CATEGORY` liste 4
+  guides pour les catégories `eliquide`, `ecig` et `resistance`. Le 4e
+  guide de chacune (`lire-fiche-eliquide`, `erreurs-frequentes-debutant-vape`,
+  `compatibilite-resistances-cartouches`) était donc systématiquement
+  tronqué et n'apparaissait jamais dans le bloc « Guides utiles » d'aucune
+  fiche produit de ces catégories, malgré sa pertinence évidente (ex. :
+  le guide compatibilité résistances/cartouches n'était lié depuis aucune
+  fiche produit résistance). Passé `limit` à 4 ; aucun effet sur les
+  5 autres catégories (`pod`, `accessoire`, `pack`, `diy`,
+  `alternative-puff`), qui n'ont que 3 guides mappés.
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}}`). En vérifiant
+  l'état réel de `main` avant de choisir une tâche (les runs précédents
+  s'appuyaient sur le journal, qui s'est révélé périmé — voir constat
+  ci-dessus), j'ai audité `categorySeo.js` (les 2 meta descriptions courtes
+  identifiées le 07-24/07-28 sont toujours courtes sur `main`, aucune des
+  2 branches n'a été mergée) et `productGuides.js` dans la foulée
+  (priorité 2 de la mission : maillage catégories/produits/guides). Choisi
+  ce bug de troncature plutôt que de refaire une 3e fois le correctif des
+  meta descriptions (déjà tenté 2 fois sans être mergé — un 3e correctif
+  identique n'aurait ajouté aucune valeur marginale une fois le blocage
+  résolu, juste un conflit de plus sur les mêmes lignes).
+- **Fichiers** : `src/data/productGuides.js`
+- **Vérifié** : `npm ci`, `npm run build` (359 pages pré-rendues),
+  `npm test` (169/169), `node scripts/crawl-links.mjs` (0 lien cassé /
+  4874 vérifiés) — tous verts. Vérifié dans `dist/produit/.../index.html`
+  qu'une fiche produit résistance lie désormais bien vers
+  `compatibilite-resistances-cartouches`.
+- **Suite** : voir le constat prioritaire ci-dessus — à traiter avant
+  toute autre chose. Une fois le blocage résolu (fusion des PR et/ou
+  passage en mode `push`), vérifier les conflits triviaux attendus sur
+  `categorySeo.js` (2 branches touchent les mêmes 2 lignes de meta
+  description) et revalider que le contenu des branches 07-22 à 07-28
+  est toujours pertinent avant de fusionner (rien ne semble périmé à ce
+  jour). Ne pas re-proposer le correctif des meta descriptions
+  `nouveautes`/`meilleures-ventes` dans un nouveau run tant que le
+  blocage n'est pas résolu.
+
+---
+
 ### 2026-07-28 — [type : audit]
 - **Fait** : audit technique complet (aucun run de type audit dans le
   journal jusqu'ici, malgré la priorité 4 de la mission et le rythme
