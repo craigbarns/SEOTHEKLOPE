@@ -14,6 +14,72 @@ entrées passées.
 
 ---
 
+### 2026-07-30 — [type : contenu]
+- **⚠️ Mise à jour du constat de blocage (voir 2026-07-29)** : `gsc-data.json`
+  toujours vide. Revérifié le workflow `agent-repo/.github/workflows/seo-agent.yml` :
+  `DELIVERY_MODE` est toujours `pr` (non corrigé, comme prévu — décision
+  humaine). Revérifié aussi les 7 branches `seo/2026-07-22` à
+  `seo/2026-07-28` **plus la branche `seo/2026-07-29`** créée par le run
+  d'hier : `git merge-base --is-ancestor` confirme qu'aucune des 8 n'est
+  mergée sur `main`. Nouveau constat, plus grave que celui du 07-29 : en
+  diffant chacune de ces branches contre `origin/main` actuel (`git diff
+  origin/main origin/seo/2026-07-2X --stat`), les diffs affichent
+  désormais des **dizaines de fichiers non liés au SEO** (tout `api/`,
+  `supabase/`, `src/lib/pricing.js`, `src/pages/Checkout.jsx`, etc.) en
+  sens inverse, preuve que ces branches sont basées sur un `main` très
+  ancien (avant les refontes checkout/CRO des PR #36-#44 mergées entre
+  temps par un autre processus). Elles ne sont donc plus de simples PR «
+  en attente de review » : elles sont **structurellement obsolètes et ne
+  pourront plus se fusionner proprement** sans résolution manuelle massive
+  de conflits sans rapport avec le SEO. Recommandation renforcée pour un
+  humain : fermer ces 8 PR sans les fusionner, et juger au cas par cas
+  si leur contenu SEO (guides, maillage, meta descriptions — détaillé
+  dans les entrées 07-22 à 07-29 ci-dessous) mérite d'être recréé
+  manuellement sur `main` actuel. Je n'ai pas fermé ces PR moi-même
+  (action de gestion de PR sur le repo theklope, hors du périmètre d'un
+  commit de contenu).
+- **Fait** : nouveau guide « Entretenir un kit classique ou une box de
+  cigarette électronique » (`entretenir-kit-classique-box`, catégorie
+  Entretien) : nettoyage du clearomiseur, joints (o-rings), pas de vis
+  510/contacts, stockage de la box et de la batterie (dont batterie
+  amovible). FAQ + 2 produits associés (Aegis Legend 3 200w, Gen 80s
+  iTank 2 — deux box/kits avec clearomiseur, cohérents avec le sujet).
+- **Pourquoi** : ce guide avait déjà été proposé deux fois (runs
+  07-23 et 07-25, sous des noms différents — l'entretien de kit
+  classique/box vs. le stockage e-liquides/batterie) mais jamais mergé
+  sur `main` (branches `seo/2026-07-23` et `seo/2026-07-25`, toutes deux
+  désormais obsolètes — voir constat ci-dessus). Vérifié directement dans
+  `blog.js` sur `main` avant d'agir (pas seulement le journal) : toujours
+  21 guides, aucun ne couvre l'entretien d'un kit tubulaire/box (seul
+  `entretenir-pod-rechargeable` existe, pour les pods). Contenu priorité 1
+  de la mission, écart de longue date jamais résolu à cause du blocage de
+  livraison — recréé directement plutôt que de retenter un correctif
+  d'optimisation déjà 3x tenté sans effet (meta descriptions
+  `categorySeo.js`) ou déjà fait localement mais non mergé
+  (`productGuides.js` limit=3→4, toujours à 3 sur `main`, revérifié
+  aujourd'hui).
+- **Fichiers** : `src/data/blog.js`, `public/llms-full.txt` (régénéré par
+  le build)
+- **Vérifié** : `npm ci`, `npm run build` (360 pages pré-rendues, 22
+  articles), `npm test` (180/180), `node scripts/crawl-links.mjs` (0 lien
+  cassé / 4601 vérifiés) — tous verts. Vérifié dans `dist/guides/entretenir-kit-classique-box/index.html`
+  que le titre, la meta description, le disclaimer « réservés aux
+  personnes majeures » et les 2 liens produits associés sont bien
+  présents dans le HTML pré-rendu.
+- **Suite** : voir le constat de blocage ci-dessus — à traiter avant que
+  d'autres runs ne s'accumulent sur des branches obsolètes. Une fois des
+  PR fermées/mergées par un humain : (1) `productGuides.js` — le nouveau
+  guide n'a volontairement pas été ajouté au maillage produit → guides
+  (`GUIDES_BY_CATEGORY`, catégorie `ecig`) car cette catégorie a déjà 4
+  guides mappés pour une limite d'affichage toujours à 3 sur `main` (le
+  correctif limit=4 du 07-29 n'a jamais été mergé) — l'ajouter maintenant
+  l'aurait rendu invisible ; (2) meta descriptions `nouveautes`/
+  `meilleures-ventes` toujours sous 140 caractères sur `main` (135 et 117
+  caractères, revérifié aujourd'hui) ; (3) maillage `staticSeoPages.js` ↔
+  `blog.js` (guide → page statique) toujours absent de `main`.
+
+---
+
 ### 2026-07-29 — [type : optimisation]
 - **⚠️ Constat prioritaire (non lié au diff du jour)** : la cause probable
   du blocage signalé depuis le 2026-07-24 a été identifiée. Le workflow
