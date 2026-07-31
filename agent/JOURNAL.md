@@ -14,6 +14,94 @@ entrées passées.
 
 ---
 
+### 2026-07-31 — [type : optimisation]
+- **✅ Le blocage de livraison signalé du 2026-07-24 au 07-30 est résolu.**
+  `git log` sur `site/` montre que les 8 branches `seo/2026-07-22` à
+  `seo/2026-07-30` ont toutes été mergées sur `main` par un humain (série
+  de commits `Merge remote-tracking branch 'origin/seo/2026-07-2X'`),
+  suivies d'un commit de reconstruction manuelle (`b24679d`, « reconstruire
+  blog.js et llms-full.txt après merge des PR SEO quotidiens ») et de
+  plusieurs commits d'un autre processus (images des guides, mention
+  factuelle des avis Google). `main` contient maintenant 35 guides
+  (`src/data/blog.js`) contre 22 au 07-30. Plus besoin de vérifier
+  `git merge-base --is-ancestor` avant d'agir : l'état de `main` est de
+  nouveau la seule source de vérité fiable (ce qui était déjà la règle,
+  mais qui redevient simple à appliquer).
+- **Fait** : audit complet post-fusion (build, tests, liens, longueurs de
+  titres/meta descriptions sur `blog.js`/`categorySeo.js`/
+  `staticSeoPages.js`), puis correction du pire écart trouvé : le guide
+  `quelle-cigarette-electronique-choisir` (ajouté le 07-29 par un autre
+  processus, non tracé dans ce journal) avait un titre de 85 caractères et
+  une meta description de **220 caractères** (soit ~96 caractères pour le
+  `<title>` complet avec le suffixe « | THEKLOPE ») — très au-dessus des
+  limites d'affichage Google (~60 car. pour le titre, ~155-160 car. pour
+  la meta description), avec un risque réel de troncature disgracieuse en
+  SERP pour l'un des guides les plus importants du site (relié depuis la
+  page locale Marseille et le maillage produit → guides catégorie `ecig`).
+  Raccourci à 52 caractères (titre) et 153 caractères (description), sens
+  et mots-clés conservés, sans aucune promesse de santé/sevrage (contenu
+  factuel comparatif, conforme GUARDRAILS).
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Avec le blocage de
+  livraison résolu, un audit s'imposait avant tout nouveau contenu ou
+  optimisation ciblée, pour repartir d'un état de `main` vérifié plutôt
+  que du journal (dernier audit : 07-28, avant la fusion massive et avant
+  les ~13 guides ajoutés entre-temps par un autre processus). L'audit n'a
+  trouvé qu'un seul écart significatif (celui corrigé ci-dessus) ; les
+  autres écarts trouvés sont mineurs ou déjà qualifiés (voir Suite/
+  BACKLOG). Un audit + correction ponctuelle reproduit le pattern du
+  07-28 (audit qui corrige aussi ce qu'il trouve, diff toujours minimal).
+- **Fichiers** : `src/data/blog.js`, `public/llms-full.txt` (régénéré par
+  le build)
+- **Vérifié** : `npm ci`, `npm run build` (404 pages pré-rendues : 308
+  produits, 41 catégories, 35 articles, 20 pages statiques), `npm test`
+  (186/186), `node scripts/crawl-links.mjs` (0 lien cassé / 6970
+  vérifiés) — tous verts. Vérifié dans
+  `dist/guides/quelle-cigarette-electronique-choisir/index.html` que le
+  nouveau titre et la nouvelle meta description apparaissent bien dans
+  `<title>`, `<meta name="description">`, `og:description`,
+  `twitter:description` et le JSON-LD `BlogPosting.headline/description`.
+- **Suite** — écarts repérés pendant l'audit, non traités aujourd'hui
+  (un seul écart par run) :
+  1. `src/data/categorySeo.js` : `meilleures-ventes` toujours à 117
+     caractères (sous la fourchette 140-160), malgré 2 tentatives
+     passées (07-24, 07-28) — celles-ci ont bien été mergées pour
+     `nouveautes` (152, conforme) mais pas pour `meilleures-ventes`,
+     resté inchangé. À corriger dans un prochain run d'optimisation.
+  2. **Régression détectée** : le maillage guide → page statique ajouté
+     les 07-26 et 07-27 (liens inline retour depuis
+     `compatibilite-resistances-cartouches` vers `boutique-vape-marseille`,
+     depuis `livraison-produits-vape-france` vers `livraison-retours`, et
+     depuis `quelle-cigarette-electronique-choisir` vers
+     `cigarette-electronique-marseille`) a disparu de `main` — probablement
+     perdu lors de la reconstruction manuelle de `blog.js` (`b24679d`).
+     Seul le lien retour de `reglementation-vape-france` vers
+     `conformite-vape` (07-27) a survécu. Le sens page statique → guide
+     (`links` array) est lui bien intact. À re-créer.
+  3. `src/data/productGuides.js` : `GUIDES_BY_CATEGORY.ecig` liste
+     maintenant **5** guides (`entretenir-kit-classique-box` a été ajouté
+     entre-temps par un autre processus) alors que
+     `relatedGuidesForProduct` a un `limit` par défaut de 4 (corrigé de 3
+     à 4 le 07-29 pour la même raison) — le 5e guide
+     (`erreurs-frequentes-debutant-vape`) est de nouveau tronqué pour
+     toutes les fiches produit `ecig`. Même classe de bug que le 07-29,
+     à surveiller si d'autres catégories dépassent leur limite après de
+     futurs ajouts de guides.
+  4. Guide `stockage-eliquides-batterie-vape` (existe sur `main` depuis la
+     fusion) toujours absent du maillage produit → guides
+     (`productGuides.js`, catégories `eliquide`/`ecig`/`pod`) — à ajouter
+     une fois le point 3 ci-dessus clarifié (ne pas dépasser la limite
+     d'affichage).
+  5. Mineur, non urgent (déjà noté 07-28) : titre `alternatives-puffs-jetables`
+     (69 car.), et nouveau : `puffs-interdites-france-2025-2026` (titre 77
+     car.) et 2 meta descriptions `categorySeo.js` sous 140 (`xros-cartouches`
+     131, `puffs-jetables` 132 car. — probablement volontaire, gamme de
+     produits nichée, à confirmer avant de toucher).
+  Prochaine étape suggérée : traiter le point 2 (régression maillage) ou
+  le point 1 (meilleures-ventes) en priorité, ce sont les plus rapides et
+  les plus qualifiés.
+
+---
+
 ### 2026-07-30 — [type : contenu]
 - **⚠️ Mise à jour du constat de blocage (voir 2026-07-29)** : `gsc-data.json`
   toujours vide. Revérifié le workflow `agent-repo/.github/workflows/seo-agent.yml` :
