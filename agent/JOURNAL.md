@@ -14,6 +14,113 @@ entrées passées.
 
 ---
 
+### 2026-08-01 — [type : audit]
+- **Fait** : audit de conformité GUARDRAILS sur le contenu ajouté par un
+  autre processus le 07-30 (commits `ba2ccf0`/`fd0338b`, ~13 guides +
+  refonte catégories, non tracés dans ce journal). Trouvé et corrigé
+  7 violations explicites de la règle n°1 de GUARDRAILS.md (« INTERDIT :
+  toute promesse de santé, d'aide au sevrage, ou comparaison de nocivité
+  avec le tabac ») :
+  1. `categorySeo.js` `e-liquides-sels-de-nicotine` : metaDescription
+     (« sevrage efficace ») et section (« réussir son sevrage tabagique
+     sans sensation de manque ») → reformulé en dosage/sensation en
+     gorge, sans promesse de sevrage.
+  2. `blog.js` guide `meilleure-cigarette-electronique` : FAQ « Quel est
+     le meilleur tirage pour arrêter de fumer ? » → reformulé en
+     question factuelle (comparaison au tirage d'une cigarette
+     traditionnelle), réponse inchangée (déjà factuelle).
+  3. `blog.js` guide `top-10-meilleurs-eliquides` : intro affirmant que
+     « le choix du e-liquide est responsable à 80% de la réussite de
+     votre sevrage » (statistique non sourcée + promesse de sevrage) →
+     reformulé sur le choix technique (goût, nicotine, PG/VG).
+  4. `blog.js` guide `sels-de-nicotine-guide-complet` : titre (« Le Guide
+     Complet pour un Sevrage Réussi »), description (« avantages pour
+     arrêter de fumer »), intro (« ont révolutionné le sevrage
+     tabagique ») et FAQ (« recommandé... pour le sevrage immédiat ») →
+     tout reformulé en contenu factuel (dosage, compatibilité matériel),
+     titre/description gardés à une longueur comparable (54/126
+     caractères).
+  5. `blog.js` guide `sachets-nicotine-interdits-2026` : description
+     (« alternatives pour le sevrage ») → « produits de substitution
+     disponibles ».
+  6. `blog.js` même guide, section « Se tourner vers la vape aux sels de
+     nicotine » (« demeure le levier le plus efficace ») → reformulé en
+     description réglementaire neutre, sans affirmation d'efficacité
+     pour l'arrêt du tabac.
+  7. `blog.js` guide `vapoter-moins-cher-que-fumer-cout` : intro (« Outre
+     les bénéfices majeurs pour la santé... pour arrêter le tabac ») →
+     supprimé la promesse de bénéfice santé, gardé uniquement l'angle
+     économique (légitime, ce guide compare des coûts, pas la nocivité).
+  N'a pas touché : la question FAQ ligne 994 du guide
+  `reglementation-vape-france` (« Peut-on promettre que la vape aide à
+  arrêter de fumer ? » → « Non ») qui est déjà conforme et sert de
+  contre-exemple ; le titre/résumé du guide `vapoter-moins-cher-que-fumer-cout`
+  (comparaison de **coût**, pas de nocivité, autorisée) ; les mentions
+  factuelles de « santé publique »/« autorités de santé » dans un
+  contexte réglementaire (décrets), qui ne sont pas des promesses de
+  THEKLOPE. N'a pas non plus touché aux statistiques non sourcées qui ne
+  relèvent pas de GUARDRAILS (ex. « 70% des débutants... », dans
+  `top-10-meilleurs-eliquides`) — à qualifier séparément si besoin, pour
+  garder le diff du jour focalisé sur la conformité.
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). En vérifiant
+  l'état réel de `main` avant de choisir une tâche (comme toujours),
+  repéré que `main` a reçu 3 nouveaux commits humains depuis le dernier
+  run (avis Google, redirections 301, balises SEO produit + cron CRM —
+  tous hors du périmètre theklope/GUARDRAILS de cet agent, non modifiés).
+  En profitant de cette vérification pour re-dérouler l'audit
+  `grep`/longueurs prévu par le backlog, un `grep -n "sevrage\|arrêter"`
+  sur `blog.js`/`categorySeo.js` a fait remonter 8 occurrences, dont 7
+  de vraies violations de GUARDRAILS (règle non négociable, priorité sur
+  toute autre tâche de la mission) ajoutées par un batch de contenu du
+  07-30 jamais audité pour la conformité jusqu'ici. Choisi de traiter
+  cette non-conformité avant les items déjà connus du backlog (régression
+  de maillage, `meilleures-ventes` trop courte) : un écart GUARDRAILS sur
+  du contenu déjà en ligne est plus urgent qu'une optimisation de
+  maillage ou de longueur de meta description.
+- **Fichiers** : `src/data/blog.js`, `src/data/categorySeo.js`,
+  `public/llms-full.txt` (régénéré par le build)
+- **Vérifié** : `npm ci`, `npm run build` (404 pages pré-rendues : 308
+  produits, 41 catégories, 35 articles, 20 pages statiques), `npm test`
+  (188/188), `node scripts/crawl-links.mjs` (0 lien cassé / 6970
+  vérifiés) — tous verts. Revérifié par `grep` dans `dist/` qu'aucune
+  occurrence de « sevrage » ou « arrêter de fumer » ne subsiste dans les
+  pages concernées, et que le nouveau titre du guide sels de nicotine
+  apparaît bien dans `<title>`.
+- **Suite** : items backlog toujours ouverts, non traités aujourd'hui
+  (un seul sujet par run, ici la conformité) :
+  1. Régression de maillage guide → page statique (3 liens inline perdus
+     lors de la reconstruction du 07-30) — toujours absente de `main`,
+     revérifié aujourd'hui (`grep` sur les 3 slugs cibles : aucune
+     occurrence dans `blog.js`).
+  2. `categorySeo.js` `meilleures-ventes` toujours à 117 caractères.
+  3. `productGuides.js` : `GUIDES_BY_CATEGORY.ecig` à 5 guides pour une
+     limite d'affichage à 4 — non revérifié aujourd'hui, à confirmer
+     avant de reprendre ce point.
+  4. La branche `seo/2026-07-31` (run d'hier, correction titre/meta
+     `quelle-cigarette-electronique-choisir`) n'est **pas encore
+     mergée** sur `main` au 08-01 — mais ce n'est qu'un jour de latence
+     (contrairement au blocage de 8 jours résolu le 07-31), donc pas
+     d'alerte à ce stade ; à re-surveiller si elle reste ouverte
+     plusieurs jours. Attention aussi : cette branche diffe désormais
+     contre un `main` qui a avancé sur `api/`/`vercel.json`/
+     `scripts/prerender.mjs` (commits humains du 07-31 non liés au SEO)
+     — surveiller si un conflit de fusion apparaît.
+  5. Nouveau, repéré aujourd'hui sans être traité : `top-10-meilleurs-eliquides`
+     contient des statistiques non sourcées (« 80% de la réussite »,
+     « 70% des débutants ») — la première a été retirée avec la
+     correction sevrage, la seconde (70%) reste et n'est pas un problème
+     GUARDRAILS à proprement parler, mais mériterait d'être sourcée ou
+     retirée dans un futur passage qualité contenu.
+  6. Recommandé pour un prochain run : ne pas re-lancer un audit complet
+     de conformité tant que ce point n'est pas re-qualifié — mais
+     comme `main` continue de recevoir du contenu d'autres processus non
+     tracé ici (déjà 13 guides ajoutés d'un coup le 07-30 sans passer par
+     ce journal), un nouveau `grep` conformité (sevrage, nocivité, ton
+     publicitaire, ciblage mineurs) reste à refaire après tout nouvel
+     afflux de contenu externe, même hors du rythme d'audit habituel.
+
+---
+
 ### 2026-07-31 — [type : optimisation]
 - **✅ Le blocage de livraison signalé du 2026-07-24 au 07-30 est résolu.**
   `git log` sur `site/` montre que les 8 branches `seo/2026-07-22` à

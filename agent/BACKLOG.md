@@ -3,64 +3,66 @@
 L'agent pioche ici et y ajoute ce qu'il repère. Retirer une ligne quand
 elle est traitée (la déplacer dans le JOURNAL).
 
-## ✅ Blocage de livraison résolu (constat du 2026-07-31)
+## ✅ Audit conformité GUARDRAILS fait le 2026-08-01
 
-Le blocage signalé du 07-24 au 07-30 (8 branches `seo/2026-07-22` à
-`seo/2026-07-30` non mergées) est terminé : un humain les a toutes
-mergées sur `main`, suivi d'une reconstruction manuelle de `blog.js`
-(commit `b24679d`). `main` est de nouveau la seule source de vérité
-fiable — plus besoin de vérifier `git merge-base --is-ancestor` avant
-d'agir, il suffit de vérifier l'état réel du code sur `main` (ce qui
-reste toujours la bonne pratique, blocage ou non).
+Un batch de ~13 guides + refonte catégories ajouté le 07-30 par un autre
+processus (`ba2ccf0`/`fd0338b`, jamais tracé dans ce journal) contenait 7
+promesses de sevrage/bénéfice santé interdites par GUARDRAILS.md. Toutes
+corrigées le 08-01 (voir JOURNAL). Point de vigilance permanent : `main`
+reçoit régulièrement du contenu d'autres processus/agents sans passer par
+ce journal — refaire un `grep -n "sevrage\|arrêter de fumer\|nocivité\|moins
+nocif\|plus sain\|sans danger"` sur `blog.js`/`categorySeo.js`/
+`staticSeoPages.js` après tout nouvel afflux de contenu externe, même hors
+du rythme d'audit habituel.
 
-Point de vigilance : `main` continue de recevoir des commits d'autres
-processus/agents non tracés dans ce journal (ex. : le guide
-`quelle-cigarette-electronique-choisir` ajouté le 07-29, la mention des
-avis Google le 07-31). Toujours revérifier le code directement plutôt que
-de se fier au seul journal.
+## État réel sur `main` au 2026-08-01
 
-## État réel sur `main` au 2026-07-31
-
-- `src/data/blog.js` : 35 guides. Titre/meta description du guide
-  `quelle-cigarette-electronique-choisir` corrigés le 07-31 (étaient à
-  85/220 caractères, ramenés à 52/153).
-- `src/data/categorySeo.js` : `nouveautes` corrigé (152 car., dans la
-  fourchette 140-160). `meilleures-ventes` **toujours à 117 caractères**
-  (sous la fourchette) malgré 2 tentatives passées — à corriger.
-- `src/data/productGuides.js` : `limit` par défaut est bien à 4 (corrigé),
-  mais `GUIDES_BY_CATEGORY.ecig` liste maintenant 5 guides → le 5e
-  (`erreurs-frequentes-debutant-vape`) est de nouveau tronqué pour les
-  fiches produit `ecig`. Guide `stockage-eliquides-batterie-vape` non
-  mappé dans ce fichier.
+- `src/data/blog.js` : plus de 35 guides (batch du 07-30 ajouté). Titre
+  85 car. / meta description 220 car. du guide
+  `quelle-cigarette-electronique-choisir` **toujours pas corrigés sur
+  `main`** — le correctif existe sur la branche `seo/2026-07-31` (run
+  d'hier) mais n'est pas encore mergé (1 jour de latence normale au
+  08-01, pas une alerte à ce stade). Ne pas refaire ce correctif tant que
+  la branche n'est pas confirmée non mergée après plusieurs jours.
+- `src/data/categorySeo.js` : `meilleures-ventes` **toujours à 117
+  caractères** (sous la fourchette 140-160) malgré plusieurs tentatives
+  passées.
+- `src/data/productGuides.js` : `GUIDES_BY_CATEGORY.ecig` listait 5
+  guides pour une limite d'affichage à 4 lors du dernier audit du 07-31
+  — non revérifié depuis, à confirmer avant de reprendre ce point (le
+  batch de contenu du 07-30 a pu changer la donne).
 - Maillage guide ↔ page statique (`staticSeoPages.js` ↔ `blog.js`) :
   sens page → guide (`links` array) intact sur les 4 pages statiques.
-  Sens guide → page (lien inline dans le corps) : **régression** — seul
-  le lien de `reglementation-vape-france` vers `conformite-vape` a
-  survécu à la reconstruction du 07-30. Les 3 autres (ajoutés les 07-26
-  et 07-27) ont disparu :
+  Sens guide → page (lien inline dans le corps) : **toujours en
+  régression**, reconfirmé le 08-01 par `grep` — aucun des 3 liens
+  suivants n'existe dans `blog.js` :
   - `compatibilite-resistances-cartouches` → `boutique-vape-marseille`
   - `livraison-produits-vape-france` → `livraison-retours`
   - `quelle-cigarette-electronique-choisir` → `cigarette-electronique-marseille`
+  (seul le lien de `reglementation-vape-france` vers `conformite-vape`
+  a survécu à la reconstruction du 07-30).
 
 ## Optimisations repérées
 
-- [ ] Recréer les 3 liens retour guide → page statique perdus dans la
-      reconstruction du 07-30 (voir ci-dessus). Pattern déjà utilisé les
-      07-26/07-27 : lien `<a href="...">` inline dans le `text` d'une
-      section ou d'une FAQ du guide (le contenu de `blog.js` passe par
-      `dangerouslySetInnerHTML`, contrairement à `staticSeoPages.js` qui
-      échappe le texte).
+- [ ] Recréer les 3 liens retour guide → page statique listés ci-dessus.
+      Pattern déjà utilisé les 07-26/07-27 : lien `<a href="...">` inline
+      dans le `text` d'une section ou d'une FAQ du guide (`blog.js` passe
+      par `dangerouslySetInnerHTML`, contrairement à `staticSeoPages.js`
+      qui échappe le texte).
 - [ ] `categorySeo.js` : `meilleures-ventes` toujours sous 140 caractères
       (117) — allonger dans le même style que les autres catégories.
-- [ ] `productGuides.js` : soit retirer un guide de `GUIDES_BY_CATEGORY.ecig`
-      (5 mappés, limite d'affichage 4), soit repasser `limit` à 5 pour
-      cette catégorie spécifiquement (actuellement un seul `limit` global
-      pour tous les appels). Vérifier l'impact sur les autres catégories
-      avant de changer le `limit` global.
+- [ ] `productGuides.js` : revérifier `GUIDES_BY_CATEGORY.ecig` vs.
+      `limit` de `relatedGuidesForProduct()` (5 guides mappés pour une
+      limite à 4 lors du dernier contrôle) — soit retirer un guide, soit
+      adapter le `limit` pour cette catégorie spécifiquement.
 - [ ] Une fois le point ci-dessus clarifié, ajouter
       `stockage-eliquides-batterie-vape` au maillage produit → guides
       (catégories `eliquide`/`ecig`/`pod`), sans dépasser la limite
       d'affichage effective.
+- [ ] Contenu, non-GUARDRAILS : le guide `top-10-meilleurs-eliquides`
+      contient une statistique non sourcée (« 70% des débutants
+      commencent par un goût Classic ») — pas une violation GUARDRAILS,
+      mais à sourcer ou retirer dans un futur passage qualité contenu.
 - [ ] Mineur, non urgent : titres `alternatives-puffs-jetables` (69 car.)
       et `puffs-interdites-france-2025-2026` (77 car.) légèrement longs ;
       meta descriptions `categorySeo.js` `xros-cartouches` (131) et
@@ -70,18 +72,20 @@ de se fier au seul journal.
 
 ## Technique
 
-Audit complet refait le 2026-07-31 (le précédent datait du 07-28, avant
-la fusion massive) : build (404 pages pré-rendues : 308 produits, 41
-catégories, 35 articles, 20 pages statiques), `npm test` (186/186),
-`node scripts/crawl-links.mjs` (0 lien cassé / 6970 vérifiés), longueurs
-de titres/meta descriptions sur `blog.js`/`categorySeo.js`/
-`staticSeoPages.js` — tous verts sauf les écarts listés ci-dessus. Refaire
-un audit similaire dans ~1 semaine ou après un nouvel afflux de contenu
-non tracé dans ce journal.
+Audit complet le 2026-07-31 (build, tests, liens, longueurs
+titres/meta) — voir JOURNAL pour le détail. Audit ciblé conformité
+GUARDRAILS refait le 2026-08-01 suite à l'afflux de contenu du 07-30 (voir
+ci-dessus). Refaire un audit technique complet (pas seulement conformité)
+dans ~1 semaine ou après un nouvel afflux de contenu non tracé dans ce
+journal.
 
 ## À vérifier
 
 - [ ] `main` reçoit régulièrement des commits d'autres processus/agents
-      non tracés dans ce journal (guides, images, avis Google, refonte
-      conversion/checkout...). Toujours revérifier chaque affirmation du
-      backlog/journal directement dans le code sur `main` avant d'agir.
+      non tracés dans ce journal (guides en batch, images, avis Google,
+      redirections, refonte balises produit + cron CRM...). Toujours
+      revérifier chaque affirmation du backlog/journal directement dans
+      le code sur `main` avant d'agir, **y compris la conformité
+      GUARDRAILS** du contenu ajouté par ces autres processus (voir
+      constat du 08-01 ci-dessus — ce n'était encore jamais arrivé mais
+      ça peut se reproduire).
