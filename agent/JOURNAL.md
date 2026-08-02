@@ -14,6 +14,75 @@ entrées passées.
 
 ---
 
+### 2026-08-02 — [type : optimisation]
+- **⚠️ Constat prioritaire, non traité aujourd'hui** : le correctif de
+  conformité GUARDRAILS du run d'hier (2026-08-01, commit `7bec44e`
+  « purger les mentions de sevrage/arrêt du tabac non conformes », branche
+  `seo/2026-08-01`) **n'est toujours pas mergé sur `main`**. Vérifié par
+  `git merge-base --is-ancestor 7bec44e main` (→ NO) et confirmé par
+  `grep -n "sevrage\|arrêter de fumer" src/data/blog.js src/data/categorySeo.js`
+  sur `main` actuel (`e41262c`) : les 8 occurrences non conformes
+  identifiées hier sont **toujours en ligne sur le site**. Vérifié aussi
+  que la branche `seo/2026-08-01` est basée directement sur `main` actuel
+  (`git merge-base main 7bec44e` = `e41262c`, le head de `main`) : elle
+  fusionnerait sans conflit si elle était mergée, ce n'est donc qu'un
+  problème de délai de fusion, pas un problème de contenu obsolète. Ce
+  n'est qu'1 jour de latence (le pattern habituel de ce repo va de 1 à 8
+  jours avant fusion humaine), donc pas encore traité comme une alerte
+  au sens du run du 07-31/08-01 — mais comme il s'agit d'un écart
+  GUARDRAILS (publicité vape non conforme, en ligne), **ne pas laisser
+  ce point filer plusieurs jours sans le re-signaler**. Je n'ai pas
+  refait le correctif aujourd'hui pour ne pas dupliquer un travail déjà
+  fait et prêt à fusionner sans conflit — mais si `7bec44e` n'est
+  toujours pas mergé dans 2-3 jours, il faudra probablement le reproduire
+  directement sur `main` plutôt que d'attendre indéfiniment, la
+  non-conformité étant plus urgente qu'un risque de doublon de PR.
+- **Fait** : recréé les 3 liens inline retour guide → page statique
+  identifiés dans le backlog comme régression du rebuild manuel du
+  07-30 (`b24679d`) : `compatibilite-resistances-cartouches` →
+  `boutique-vape-marseille` (dans la section « Utiliser les fiches
+  produits »), `livraison-produits-vape-france` → `livraison-retours`
+  (dans la FAQ retour e-liquide ouvert), `quelle-cigarette-electronique-choisir`
+  → `cigarette-electronique-marseille` (dans la FAQ conseil en magasin).
+  Même pattern que les 07-26/07-27 : lien `<a href="...">` inline dans le
+  texte d'une section ou d'une FAQ (`blog.js` passe par
+  `dangerouslySetInnerHTML`), style déjà géré par la règle Tailwind
+  `[&_a]` de `BlogPost.jsx` (inchangée).
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Après avoir
+  confirmé le constat GUARDRAILS ci-dessus (non traité aujourd'hui par
+  choix, pour éviter un doublon d'une seule journée de latence),
+  revérifié l'état réel de `main` sur les items du backlog plutôt que de
+  faire confiance au journal : les 3 liens retour étaient toujours
+  absents de `blog.js` (`grep` sur les 3 URLs cibles → aucune occurrence),
+  confirmant la régression déjà qualifiée depuis le 07-31. Tâche choisie
+  car rapide, déjà qualifiée, conforme à la priorité 2 de la mission
+  (maillage interne), et le rythme récent (opt/audit/opt/contenu/opt/audit
+  sur les 6 derniers jours) permettait une optimisation sans dévier du
+  rythme indicatif.
+- **Fichiers** : `src/data/blog.js`
+- **Vérifié** : `npm ci`, `npm run build` (404 pages pré-rendues : 308
+  produits, 41 catégories, 35 articles, 20 pages statiques), `npm test`
+  (188/188), `node scripts/crawl-links.mjs` (0 lien cassé / 6973
+  vérifiés) — tous verts. Vérifié dans `dist/guides/.../index.html` que
+  les 3 `<a href>` inline apparaissent bien dans le HTML pré-rendu de
+  chacun des 3 guides concernés.
+- **Suite** :
+  1. Re-suivre le mergde de `seo/2026-08-01` (conformité GUARDRAILS) —
+     voir constat prioritaire ci-dessus, à re-signaler si toujours pas
+     mergé d'ici 2-3 jours.
+  2. `categorySeo.js` `meilleures-ventes` toujours à 117 caractères
+     (sous 140-160) — non revérifié aujourd'hui (un seul sujet par run),
+     mais probablement toujours d'actualité.
+  3. `productGuides.js` : `GUIDES_BY_CATEGORY.ecig` vs. `limit` de
+     `relatedGuidesForProduct()` — non revérifié aujourd'hui, à confirmer
+     avant de reprendre ce point.
+  4. Contenu : le dernier guide créé date du 07-30 ; si le prochain run
+     est aussi de l'optimisation ou de l'audit, envisager de repasser sur
+     du contenu longue traîne (priorité 1 de la mission) pour respecter
+     le rythme indicatif ~3 jours/semaine.
+
+---
+
 ### 2026-08-01 — [type : audit]
 - **Fait** : audit de conformité GUARDRAILS sur le contenu ajouté par un
   autre processus le 07-30 (commits `ba2ccf0`/`fd0338b`, ~13 guides +

@@ -3,54 +3,53 @@
 L'agent pioche ici et y ajoute ce qu'il repère. Retirer une ligne quand
 elle est traitée (la déplacer dans le JOURNAL).
 
-## ✅ Audit conformité GUARDRAILS fait le 2026-08-01
+## ⚠️ Correctif GUARDRAILS du 08-01 pas encore mergé sur `main` (à re-suivre)
 
-Un batch de ~13 guides + refonte catégories ajouté le 07-30 par un autre
-processus (`ba2ccf0`/`fd0338b`, jamais tracé dans ce journal) contenait 7
-promesses de sevrage/bénéfice santé interdites par GUARDRAILS.md. Toutes
-corrigées le 08-01 (voir JOURNAL). Point de vigilance permanent : `main`
-reçoit régulièrement du contenu d'autres processus/agents sans passer par
-ce journal — refaire un `grep -n "sevrage\|arrêter de fumer\|nocivité\|moins
-nocif\|plus sain\|sans danger"` sur `blog.js`/`categorySeo.js`/
-`staticSeoPages.js` après tout nouvel afflux de contenu externe, même hors
-du rythme d'audit habituel.
+Le correctif de conformité (commit `7bec44e`, branche `seo/2026-08-01`,
+purge des promesses de sevrage/nocivité ajoutées par le batch de contenu
+du 07-30) **n'est toujours pas mergé sur `main`** au 2026-08-02. Vérifié
+le 08-02 par `grep -n "sevrage\|arrêter de fumer" src/data/blog.js
+src/data/categorySeo.js` sur `main` (`e41262c`) : les 8 occurrences non
+conformes identifiées le 08-01 sont **toujours en ligne sur le site**.
+La branche est basée directement sur `main` actuel donc fusionnerait sans
+conflit — ce n'est qu'un délai de fusion (1 jour au 08-02, pas encore une
+alerte vu le pattern habituel de ce repo), pas un souci de contenu
+obsolète. **Ne pas refaire ce correctif tant que la branche n'est pas
+confirmée non mergée après plusieurs jours** (pour éviter un doublon) —
+mais si `7bec44e` n'est toujours pas mergé d'ici 2-3 jours, il vaudra
+mieux le reproduire directement sur `main` plutôt que de laisser une
+non-conformité publicitaire vape en ligne indéfiniment : un écart
+GUARDRAILS prime sur le risque de doublon de PR.
 
-## État réel sur `main` au 2026-08-01
+Point de vigilance permanent : `main` reçoit régulièrement du contenu
+d'autres processus/agents sans passer par ce journal — refaire un
+`grep -n "sevrage\|arrêter de fumer\|nocivité\|moins nocif\|plus sain\|sans
+danger"` sur `blog.js`/`categorySeo.js`/`staticSeoPages.js` après tout
+nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
 
-- `src/data/blog.js` : plus de 35 guides (batch du 07-30 ajouté). Titre
-  85 car. / meta description 220 car. du guide
-  `quelle-cigarette-electronique-choisir` **toujours pas corrigés sur
-  `main`** — le correctif existe sur la branche `seo/2026-07-31` (run
-  d'hier) mais n'est pas encore mergé (1 jour de latence normale au
-  08-01, pas une alerte à ce stade). Ne pas refaire ce correctif tant que
-  la branche n'est pas confirmée non mergée après plusieurs jours.
+## État réel sur `main` au 2026-08-02
+
+- `src/data/blog.js` : maillage guide → page statique (3 liens inline)
+  **recréé le 08-02** (voir JOURNAL) — traité, ne plus reprendre ce point
+  sauf nouvelle régression constatée par `grep`.
+- Titre 85 car. / meta description 220 car. du guide
+  `quelle-cigarette-electronique-choisir` : correctif du 07-31
+  (branche `seo/2026-07-31`) toujours pas mergé au 08-01, **non
+  revérifié le 08-02** (un seul sujet traité aujourd'hui) — à confirmer
+  avant de reprendre ce point.
 - `src/data/categorySeo.js` : `meilleures-ventes` **toujours à 117
-  caractères** (sous la fourchette 140-160) malgré plusieurs tentatives
-  passées.
+  caractères** (sous la fourchette 140-160) lors du dernier contrôle
+  (07-31), malgré plusieurs tentatives passées — non revérifié le 08-02.
 - `src/data/productGuides.js` : `GUIDES_BY_CATEGORY.ecig` listait 5
   guides pour une limite d'affichage à 4 lors du dernier audit du 07-31
   — non revérifié depuis, à confirmer avant de reprendre ce point (le
   batch de contenu du 07-30 a pu changer la donne).
-- Maillage guide ↔ page statique (`staticSeoPages.js` ↔ `blog.js`) :
-  sens page → guide (`links` array) intact sur les 4 pages statiques.
-  Sens guide → page (lien inline dans le corps) : **toujours en
-  régression**, reconfirmé le 08-01 par `grep` — aucun des 3 liens
-  suivants n'existe dans `blog.js` :
-  - `compatibilite-resistances-cartouches` → `boutique-vape-marseille`
-  - `livraison-produits-vape-france` → `livraison-retours`
-  - `quelle-cigarette-electronique-choisir` → `cigarette-electronique-marseille`
-  (seul le lien de `reglementation-vape-france` vers `conformite-vape`
-  a survécu à la reconstruction du 07-30).
 
 ## Optimisations repérées
 
-- [ ] Recréer les 3 liens retour guide → page statique listés ci-dessus.
-      Pattern déjà utilisé les 07-26/07-27 : lien `<a href="...">` inline
-      dans le `text` d'une section ou d'une FAQ du guide (`blog.js` passe
-      par `dangerouslySetInnerHTML`, contrairement à `staticSeoPages.js`
-      qui échappe le texte).
 - [ ] `categorySeo.js` : `meilleures-ventes` toujours sous 140 caractères
-      (117) — allonger dans le même style que les autres catégories.
+      (117 au dernier contrôle) — allonger dans le même style que les
+      autres catégories.
 - [ ] `productGuides.js` : revérifier `GUIDES_BY_CATEGORY.ecig` vs.
       `limit` de `relatedGuidesForProduct()` (5 guides mappés pour une
       limite à 4 lors du dernier contrôle) — soit retirer un guide, soit
@@ -69,15 +68,19 @@ du rythme d'audit habituel.
       `puffs-jetables` (132) sous 140 — probablement volontaire pour des
       gammes nichées, à confirmer avant de toucher. À regrouper avec
       d'autres écarts similaires plutôt qu'un commit dédié.
+- [ ] Rythme : dernier contenu créé le 07-30. Si les prochains runs
+      restent sur de l'optimisation/audit, repasser sur du contenu longue
+      traîne (priorité 1 de la mission) pour respecter le rythme
+      indicatif ~3 jours/semaine.
 
 ## Technique
 
 Audit complet le 2026-07-31 (build, tests, liens, longueurs
 titres/meta) — voir JOURNAL pour le détail. Audit ciblé conformité
 GUARDRAILS refait le 2026-08-01 suite à l'afflux de contenu du 07-30 (voir
-ci-dessus). Refaire un audit technique complet (pas seulement conformité)
-dans ~1 semaine ou après un nouvel afflux de contenu non tracé dans ce
-journal.
+ci-dessus — correctif pas encore mergé au 08-02). Refaire un audit
+technique complet (pas seulement conformité) dans ~1 semaine ou après un
+nouvel afflux de contenu non tracé dans ce journal.
 
 ## À vérifier
 
@@ -86,6 +89,6 @@ journal.
       redirections, refonte balises produit + cron CRM...). Toujours
       revérifier chaque affirmation du backlog/journal directement dans
       le code sur `main` avant d'agir, **y compris la conformité
-      GUARDRAILS** du contenu ajouté par ces autres processus (voir
-      constat du 08-01 ci-dessus — ce n'était encore jamais arrivé mais
-      ça peut se reproduire).
+      GUARDRAILS** du contenu ajouté par ces autres processus.
+- [ ] Suivre la fusion de la branche `seo/2026-08-01` (correctif
+      GUARDRAILS) — voir constat en tête de ce fichier.
