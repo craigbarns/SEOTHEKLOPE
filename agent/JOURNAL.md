@@ -14,6 +14,52 @@ entrées passées.
 
 ---
 
+### 2026-08-03 — [type : audit]
+- **Fait** : le correctif de conformité GUARDRAILS du 2026-08-01 (commit
+  `7bec44e`, branche `seo/2026-08-01`, « purger les mentions de
+  sevrage/arrêt du tabac non conformes ») n'était **toujours pas fusionné
+  sur `main`** après 3 jours (`git merge-base --is-ancestor 7bec44e
+  origin/main` → NO ; `grep -n "sevrage\|arrêter de fumer\|nocivité\|moins
+  nocif\|plus sain\|sans danger"` sur `blog.js`/`categorySeo.js` sur
+  `origin/main` (`68d3f4b`) confirmait les mêmes 8 occurrences non
+  conformes encore en ligne). Conformément au seuil fixé les 08-01/08-02
+  (« si toujours pas mergé d'ici 2-3 jours, reproduire directement sur
+  main »), j'ai reproduit le correctif directement sur `main` par
+  `git cherry-pick -n 7bec44e`, qui s'est appliqué sans conflit (le
+  contenu visé n'avait pas bougé depuis). Après application, un nouveau
+  `grep` ne remonte plus que deux occurrences légitimes (une FAQ de la
+  page `/conformite-vape` qui répond explicitement « non » à la promesse
+  de sevrage, et une ligne de `llms-full.txt` qui est elle-même un
+  engagement de non-promesse santé) — aucune formulation promotionnelle
+  restante.
+- **Pourquoi** : écart GUARDRAILS (publicité vape non conforme à l'art.
+  L3513-4 CSP) resté en ligne sur le site pendant plusieurs jours faute de
+  fusion humaine de la PR `seo/2026-08-01` ; le backlog précisait
+  explicitement qu'un tel écart prime sur le risque de doublon de PR une
+  fois le délai de 2-3 jours dépassé. Pas de données GSC disponibles
+  aujourd'hui (`gsc-data.json` vide).
+- **Fichiers** : `public/llms-full.txt`, `src/data/blog.js`,
+  `src/data/categorySeo.js` (contenu identique au commit `7bec44e`,
+  committé sur une nouvelle branche `seo/2026-08-03` basée sur `main`
+  actuel `68d3f4b`). `npm run build` (sitemap + llms-full + vite build +
+  prerender 404 pages) et `npm test` (197/197) passent après application.
+- **Suite** : si la PR `seo/2026-08-01` finit par être fusionnée en plus
+  de celle d'aujourd'hui, elle sera un no-op (contenu identique) — pas de
+  conflit attendu. Vérifier lors du prochain run que `seo/2026-08-03` a
+  bien été fusionnée ; sinon, ce correctif de conformité aura été
+  reproduit deux fois sans jamais atteindre `main`, ce qui indiquerait un
+  problème plus large dans le pipeline de fusion des PR à investiguer
+  (pas seulement un délai). Aucun contenu long format traité aujourd'hui
+  (dernier contenu créé le 07-30) : si les prochains runs restent sur de
+  l'audit/optimisation, revenir sur une page de contenu longue traîne
+  pour respecter le rythme indicatif de la mission. Points de la liste
+  « À vérifier » du BACKLOG (titre/meta `quelle-cigarette-electronique-
+  choisir`, longueur `meilleures-ventes`, `GUIDES_BY_CATEGORY.ecig` vs.
+  limite d'affichage) non revérifiés aujourd'hui — un seul sujet traité
+  ce run, conformément à la règle « une tâche par run ».
+
+---
+
 ### 2026-08-02 — [type : optimisation]
 - **⚠️ Constat prioritaire, non traité aujourd'hui** : le correctif de
   conformité GUARDRAILS du run d'hier (2026-08-01, commit `7bec44e`
