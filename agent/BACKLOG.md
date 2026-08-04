@@ -3,24 +3,30 @@
 L'agent pioche ici et y ajoute ce qu'il repère. Retirer une ligne quand
 elle est traitée (la déplacer dans le JOURNAL).
 
-## ⚠️ À suivre : la reproduction du 08-03 (branche `seo/2026-08-03`) sera-t-elle mergée ?
+## 🚨 ALERTE PIPELINE — un correctif de conformité disparaît deux fois de suite
 
-Le correctif initial (commit `7bec44e`, branche `seo/2026-08-01`) n'ayant
-toujours pas été mergé sur `main` après 3 jours (confirmé le 08-03 par
-`git merge-base --is-ancestor 7bec44e origin/main` → NO, et par un `grep`
-retrouvant les mêmes 8 occurrences non conformes sur `origin/main`
-`68d3f4b`), il a été **reproduit directement sur `main`** le 2026-08-03
-via `git cherry-pick -n 7bec44e` sur une nouvelle branche
-`seo/2026-08-03` (build + 197 tests vérifiés verts — voir JOURNAL du
-08-03).
+Chronologie : correctif committé le 08-01 (branche `seo/2026-08-01`,
+commit `7bec44e`) → jamais mergé → reproduit le 08-03 directement sur une
+nouvelle branche `seo/2026-08-03` → **au 08-04, cette branche n'existe
+plus sur le remote** (`git branch -a` : absente) et les mêmes 7
+formulations non conformes étaient de retour sur `main`. Reproduit une
+3e fois le 08-04 sur `seo/2026-08-04` (voir JOURNAL).
 
-**Prochain run : vérifier que `seo/2026-08-03` est bien mergée sur
-`main`.** Si elle ne l'est toujours pas après 2-3 jours, ce sera le
-deuxième correctif de conformité bloqué de suite — creuser pourquoi les
-PR de conformité en particulier ne sont pas fusionnées plutôt que de
-reproduire une 3e fois sans comprendre la cause. Si `seo/2026-08-01`
-finit par être mergée en plus de `seo/2026-08-03`, ce sera un no-op
-(contenu identique), pas un conflit à résoudre.
+**Ce n'est plus un simple délai de fusion humaine** (pattern habituel
+1-8 jours observé sur ce repo depuis fin juillet) : c'est un correctif
+qui **disparaît entièrement** après avoir été committé et soi-disant
+vérifié vert. Deux hypothèses non tranchées depuis ce contexte : échec
+de push spécifique à certains runs, ou branche supprimée après un
+merge qui n'aurait pourtant pas appliqué son contenu à `main`.
+
+**Prochain run : vérifier d'abord si `seo/2026-08-04` (ou son contenu)
+est bien sur `main`** (`grep -n "sevrage\|arrêter de fumer"
+src/data/blog.js src/data/categorySeo.js`). Si les mêmes 7 occurrences
+sont de nouveau là, **ne pas reproduire mécaniquement une 4e fois** —
+consigner l'alerte de façon très visible et suggérer à un humain
+d'investiguer le pipeline (`agent-repo/.github/workflows/seo-agent.yml`,
+logs CI des runs 08-01/08-03/08-04) plutôt que de continuer à corriger
+un symptôme qui revient.
 
 Point de vigilance permanent : `main` reçoit régulièrement du contenu
 d'autres processus/agents sans passer par ce journal — refaire un
@@ -28,7 +34,7 @@ d'autres processus/agents sans passer par ce journal — refaire un
 danger"` sur `blog.js`/`categorySeo.js`/`staticSeoPages.js` après tout
 nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
 
-## État réel sur `main` au 2026-08-03
+## État réel sur `main` au 2026-08-04
 
 - `src/data/blog.js` : maillage guide → page statique (3 liens inline)
   **recréé le 08-02** (voir JOURNAL) — traité, ne plus reprendre ce point
@@ -45,6 +51,12 @@ nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
   guides pour une limite d'affichage à 4 lors du dernier audit du 07-31
   — non revérifié depuis, à confirmer avant de reprendre ce point (le
   batch de contenu du 07-30 a pu changer la donne).
+- `src/data/staticSeoPages.js` : repéré en passant le 08-04 (non traité,
+  hors sujet du jour) — la branche obsolète `seo/2026-08-01` contenait un
+  changement de seuil de livraison gratuite 29€→49€ sur les pages
+  `boutique-vape-marseille`/`cigarette-electronique-marseille` ; `main`
+  est toujours à 29€. Pas une question GUARDRAILS, à confirmer avec le
+  reste du site (prix réel appliqué) avant de toucher.
 
 ## Optimisations repérées
 
@@ -78,10 +90,10 @@ nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
 
 Audit complet le 2026-07-31 (build, tests, liens, longueurs
 titres/meta) — voir JOURNAL pour le détail. Audit ciblé conformité
-GUARDRAILS refait le 2026-08-01, re-vérifié et corrigé directement sur
-`main` le 2026-08-03 (voir ci-dessus). Refaire un audit technique complet
-(pas seulement conformité) dans ~1 semaine ou après un nouvel afflux de
-contenu non tracé dans ce journal.
+GUARDRAILS refait le 2026-08-01, 08-03 et 08-04 (voir alerte pipeline en
+tête de ce fichier — le correctif ne tient pas sur `main`). Refaire un
+audit technique complet (pas seulement conformité) dans ~1 semaine ou
+après un nouvel afflux de contenu non tracé dans ce journal.
 
 ## À vérifier
 
@@ -91,5 +103,7 @@ contenu non tracé dans ce journal.
       revérifier chaque affirmation du backlog/journal directement dans
       le code sur `main` avant d'agir, **y compris la conformité
       GUARDRAILS** du contenu ajouté par ces autres processus.
-- [ ] Suivre la fusion de la branche `seo/2026-08-03` (reproduction du
-      correctif GUARDRAILS) — voir constat en tête de ce fichier.
+- [ ] Suivre le sort de la branche `seo/2026-08-04` (3e reproduction du
+      correctif GUARDRAILS) — voir alerte pipeline en tête de ce fichier.
+      Si elle disparaît aussi, escalader vers un humain plutôt que de
+      reproduire une 4e fois.

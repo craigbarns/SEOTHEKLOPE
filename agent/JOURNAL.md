@@ -12,6 +12,79 @@ entrées passées.
 - **Fichiers** : liste des fichiers touchés dans theklope
 - **Suite** : ce que le prochain run devrait envisager
 
+### 2026-08-04 — [type : audit]
+- **Fait** : troisième reproduction du correctif de conformité GUARDRAILS
+  (sevrage/arrêt du tabac). Avant de choisir une tâche, vérifié l'état réel
+  de `site/` : `main` est à `8effe99` (a avancé de plusieurs commits humains
+  non liés au SEO depuis le 08-03 — outils d'emailing admin, filtres
+  catégories). La branche `seo/2026-08-03` annoncée fusionnée/committée
+  dans le journal du 08-03 **n'existe pas sur le remote**
+  (`git branch -a` : seules `seo/2026-08-01` et `seo/2026-08-02` existent
+  parmi les branches SEO d'août — pas de `2026-08-03`). Un `grep` sur
+  `blog.js`/`categorySeo.js` confirme que les **mêmes 7 formulations non
+  conformes** (sevrage, arrêt du tabac) identifiées le 08-01 et
+  « corrigées » le 08-03 sont toujours en ligne sur `main` — le correctif
+  du 08-03 a donc été perdu (jamais poussé, ou poussé puis jamais
+  fusionné et la branche supprimée/non trouvée). Reproduit à l'identique
+  les 7 corrections (mêmes formulations de remplacement que le 08-01/08-03,
+  retrouvées via `git diff main origin/seo/2026-08-01` malgré le fait que
+  cette branche soit désormais structurellement obsolète sur le reste du
+  diff — seules les 3 lignes `blog.js`/`categorySeo.js` liées à la
+  conformité ont été reprises, pas le reste de son diff qui contient des
+  dizaines de fichiers sans rapport, preuve de son âge) : tirage MTL,
+  intro top-eliquides, titre/description/intro guide sels de nicotine,
+  FAQ dosage, description/section sachets de nicotine, intro coût vape,
+  metaDescription/section `e-liquides-sels-de-nicotine` dans
+  `categorySeo.js`. N'a pas touché à `staticSeoPages.js` : la branche
+  `seo/2026-08-01` contenait aussi un changement `29€→49€` sur le seuil de
+  livraison gratuite, mais ce n'est pas une question de conformité
+  GUARDRAILS (juste une dérive de contenu d'une branche obsolète) — laissé
+  en l'état pour ne pas modifier un prix sans confirmation.
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Écart GUARDRAILS
+  non négociable (publicité vape non conforme à l'art. L3513-4 CSP)
+  resté en ligne sur le site depuis au moins le 08-01 (4 jours), malgré
+  deux tentatives de correctif précédentes qui ne se sont jamais
+  concrétisées sur `main`. Priorité absolue sur toute autre tâche de la
+  mission tant que ce n'est pas fusionné.
+- **Fichiers** : `src/data/blog.js`, `src/data/categorySeo.js`,
+  `public/llms-full.txt` (régénéré par le build)
+- **Vérifié** : `npm ci`, `npm run build` (404 pages pré-rendues : 308
+  produits, 41 catégories, 35 articles, 20 pages statiques), `npm test`
+  (197/197), `node scripts/crawl-links.mjs` (0 lien cassé / 7780
+  vérifiés) — tous verts. `grep` dans `dist/` confirme qu'aucune
+  occurrence de « sevrage » ou « arrêter de fumer » ne subsiste, sauf la
+  question FAQ légitime (« Peut-on promettre que la vape aide à arrêter
+  de fumer ? » → « Non »).
+- **⚠️ Alerte pipeline, plus grave qu'un simple délai de fusion** : ce
+  n'est plus seulement « la PR n'est pas encore mergée » (pattern observé
+  depuis fin juillet) — c'est la **deuxième fois consécutive qu'un
+  correctif de conformité committé disparaît entièrement** (ni sur `main`,
+  ni sur une branche remote retrouvable), alors que d'autres travaux
+  (contenu, optimisation) des mêmes runs ont fini par apparaître sur
+  `main` d'une manière ou d'une autre. Hypothèse : soit le push de la
+  branche échoue spécifiquement certains jours sans que je puisse le
+  détecter depuis ce contexte, soit une branche fusionnée est supprimée
+  après merge (normal) mais alors le contenu devrait être sur `main` — ce
+  qui n'est pas le cas. Un humain doit investiguer le pipeline de
+  livraison (`agent-repo/.github/workflows/seo-agent.yml`, mode de
+  livraison, logs CI des runs 08-01 et 08-03) plutôt que de laisser
+  l'agent reproduire ce correctif une 4e fois sans comprendre la cause
+  racine.
+- **Suite** :
+  1. **Ne pas reproduire ce correctif une 4e fois sans investigation
+     humaine du pipeline** si `seo/2026-08-04` connaît le même sort — au
+     prochain run, vérifier d'abord si ce commit a atteint `main`
+     (`grep` conformité). S'il a de nouveau disparu, escalader plus
+     fortement plutôt que de re-corriger mécaniquement.
+  2. Items du backlog non revérifiés aujourd'hui (un seul sujet par run) :
+     titre/meta `quelle-cigarette-electronique-choisir`, longueur
+     `meilleures-ventes` dans `categorySeo.js`,
+     `GUIDES_BY_CATEGORY.ecig` vs. limite d'affichage dans
+     `productGuides.js`.
+  3. Aucun contenu long format traité depuis le 07-30 — si le prochain
+     run confirme que ce correctif a bien été fusionné, revenir sur une
+     page de contenu longue traîne (priorité 1 de la mission).
+
 ---
 
 ### 2026-08-03 — [type : audit]
