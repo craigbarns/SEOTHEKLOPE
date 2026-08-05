@@ -12,6 +12,107 @@ entrées passées.
 - **Fichiers** : liste des fichiers touchés dans theklope
 - **Suite** : ce que le prochain run devrait envisager
 
+### 2026-08-05 — [type : contenu]
+- **⚠️ Alerte pipeline confirmée et aggravée, correctif de conformité NON
+  reproduit aujourd'hui (décision volontaire)** : avant de choisir une
+  tâche, vérifié comme demandé par la Suite du 08-04 si le correctif de
+  conformité (sevrage/arrêt du tabac) avait atteint `main`. Résultat :
+  non — `grep -n "sevrage\|arrêter de fumer\|nocivité\|moins nocif\|plus
+  sain\|sans danger" src/data/blog.js src/data/categorySeo.js` sur `main`
+  (`879bdf6`) remonte les mêmes 7 occurrences non conformes qu'au 08-01.
+  Plus grave : `git ls-remote --heads origin | grep seo` montre que les
+  branches `seo/2026-08-01` et `seo/2026-08-02` existent bien sur le
+  remote (contenu identique, non mergées), mais **`seo/2026-08-03` et
+  `seo/2026-08-04` n'existent pas du tout** — pas seulement « non
+  mergées », elles n'ont **jamais été poussées**, alors que le journal
+  de ces deux jours affirme un commit local vérifié vert. Vérifié aussi
+  `git merge-base --is-ancestor 7bec44e HEAD` → NO. Confirmé également
+  qu'aucun jeton (`gh auth status`, `env | grep -i token`) n'est
+  disponible dans ce contexte pour consulter les logs GitHub Actions ou
+  lister les PR ouvertes sur `craigbarns/theklope` — impossible d'aller
+  plus loin dans le diagnostic depuis l'agent. Conformément à
+  l'instruction explicite laissée le 08-04 (« ne pas reproduire ce
+  correctif une 4e fois sans investigation humaine du pipeline » si le
+  même sort se reproduit), **je n'ai pas recommis ce correctif
+  aujourd'hui** : une 3e/4e branche identique (`seo/2026-08-01` et
+  `seo/2026-08-02` portent déjà ce contenu, prêt à fusionner sans
+  conflit) n'apporterait aucune valeur marginale et ne résoudrait pas la
+  cause racine. **Un humain doit investiguer en priorité** : (1) les
+  logs des jobs `seo-agent.yml` des 08-03 et 08-04 (étape « Livraison sur
+  theklope », `git push origin "$BRANCH" --force` — voir si le push a
+  échoué ou n'a jamais été atteint), (2) pourquoi `seo/2026-08-01` et
+  `seo/2026-08-02` restent ouvertes sans être mergées ni fermées après
+  plusieurs jours. Le correctif à mergerait ces deux branches suffirait à
+  résoudre l'écart GUARDRAILS sans nouveau travail de contenu.
+- **Fait** : dans ce contexte (correctif de conformité volontairement non
+  repris, voir ci-dessus), traité une tâche différente pour respecter la
+  règle « une tâche par run » et le rythme de la mission : nouveau guide
+  « Voyager en avion avec sa cigarette électronique : les règles à
+  connaître » (`voyager-avion-cigarette-electronique`, catégorie
+  Réglementation) : rangement cabine/soute des batteries lithium, règle
+  des liquides à 100 ml en cabine et purge du réservoir avant le vol,
+  rappel de vérifier la réglementation du pays de destination. FAQ (3
+  questions) + 2 produits associés (kits pods compacts Argus G2 Mini et
+  Q16 PRO). Contenu factuel et réglementaire, aucune promesse de santé ni
+  ton publicitaire, conforme GUARDRAILS.
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Aucun contenu long
+  format traité depuis le 2026-07-30 (6 jours, les runs 08-01 à 08-04
+  ayant tous été des audits/reproductions du correctif de conformité) —
+  écart avec le rythme indicatif ~3 jours/semaine de contenu (priorité 1
+  de la mission). Sujet choisi après vérification qu'aucun des 36 guides
+  existants ne traitait le voyage en avion (`grep -n "slug:"
+  src/data/blog.js`) ; recherche longue traîne pertinente et non couverte
+  (règles bagages/batteries/liquides), dans la continuité éditoriale des
+  guides pratiques déjà en ligne.
+- **Repéré en cours de route, non traité aujourd'hui** : en cherchant des
+  IDs produits valides pour le maillage du nouveau guide, découvert que
+  `xros-4-mini-269` (8 occurrences dans `relatedProductIds` de
+  `blog.js`) et `pixo-aura-2-301` (2 occurrences) ne correspondent à
+  **aucun `id` réel** dans `src/data/products.js` (`grep -n "xros-4-mini\|
+  pixo-aura-2" src/data/products.js` → rien). Ces références cassées ne
+  cassent ni le build ni les tests (le composant `BlogPost.jsx` filtre
+  silencieusement les IDs introuvables), mais privent 8 guides d'un
+  produit associé sur 2 ou 3 attendus — utilisé `argus-g2-mini-1500mah-
+  voopoo-offre-groupee-1-1-279` et `q16-pro-146` (IDs vérifiés existants)
+  pour le nouveau guide. À corriger dans un futur run d'optimisation
+  (remplacer ces 2 IDs fantômes par de vrais IDs de kits pods compacts
+  dans les 8+2 guides concernés).
+- **Fichiers** : `src/data/blog.js`, `public/llms-full.txt` (régénéré par
+  le build)
+- **Vérifié** : `npm ci`, `npm run build` (409 pages pré-rendues : 308
+  produits, 45 catégories, 36 articles, 20 pages statiques), `npm test`
+  (197/197), `node scripts/crawl-links.mjs` (0 lien cassé / 7841
+  vérifiés) — tous verts. Vérifié dans
+  `dist/guides/voyager-avion-cigarette-electronique/index.html` que le
+  titre, la meta description, le JSON-LD `BlogPosting`/`BreadcrumbList`
+  et le disclaimer « réservés aux personnes majeures » sont bien présents
+  dans le HTML pré-rendu (les produits associés, comme sur tous les
+  guides existants, ne sont pas dans ce shell SEO statique — rendus côté
+  client uniquement, comportement inchangé). `grep` conformité sur le
+  nouveau contenu (`sevrage`, `nocivité`, etc.) : aucune occurrence.
+- **Suite** :
+  1. **Priorité pour un humain** : investiguer pourquoi `seo/2026-08-03`
+     et `seo/2026-08-04` n'existent pas sur le remote alors que les
+     journaux des 08-03/08-04 décrivent un commit local vérifié vert, et
+     pourquoi `seo/2026-08-01`/`seo/2026-08-02` (contenu de correctif
+     identique, prêt à fusionner sans conflit) restent ouvertes sans
+     être ni mergées ni fermées. Tant que ce n'est pas résolu, ne pas
+     reproduire mécaniquement ce correctif à chaque run (déjà fait 3
+     fois) — mais si au prochain run les branches 08-01/08-02
+     disparaissent aussi du remote, c'est un signal encore plus fort
+     qu'un humain doit agir sur le pipeline avant tout nouveau run SEO.
+  2. IDs produits fantômes `xros-4-mini-269` / `pixo-aura-2-301` dans
+     `blog.js` (voir ci-dessus) — à corriger dans un futur run
+     d'optimisation, indépendamment de l'écart GUARDRAILS.
+  3. Items backlog non revérifiés aujourd'hui (un seul sujet par run) :
+     `categorySeo.js` `meilleures-ventes` (117 caractères au dernier
+     contrôle), `productGuides.js` `GUIDES_BY_CATEGORY.ecig` (toujours 5
+     guides pour un `limit` par défaut de 4, revérifié en passant
+     aujourd'hui — le 5e, `erreurs-frequentes-debutant-vape`, reste
+     tronqué), titre/meta `quelle-cigarette-electronique-choisir`.
+
+---
+
 ### 2026-08-04 — [type : audit]
 - **Fait** : troisième reproduction du correctif de conformité GUARDRAILS
   (sevrage/arrêt du tabac). Avant de choisir une tâche, vérifié l'état réel

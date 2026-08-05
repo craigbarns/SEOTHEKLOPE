@@ -3,30 +3,44 @@
 L'agent pioche ici et y ajoute ce qu'il repère. Retirer une ligne quand
 elle est traitée (la déplacer dans le JOURNAL).
 
-## 🚨 ALERTE PIPELINE — un correctif de conformité disparaît deux fois de suite
+## 🚨 ALERTE PIPELINE — non résolue au 08-05, NE PAS reproduire le correctif mécaniquement
 
-Chronologie : correctif committé le 08-01 (branche `seo/2026-08-01`,
-commit `7bec44e`) → jamais mergé → reproduit le 08-03 directement sur une
-nouvelle branche `seo/2026-08-03` → **au 08-04, cette branche n'existe
-plus sur le remote** (`git branch -a` : absente) et les mêmes 7
-formulations non conformes étaient de retour sur `main`. Reproduit une
-3e fois le 08-04 sur `seo/2026-08-04` (voir JOURNAL).
+Chronologie complète : correctif committé le 08-01 (branche
+`seo/2026-08-01`, commit `7bec44e`) → jamais mergé → reproduit le 08-03
+sur une nouvelle branche → **absente du remote au 08-04** → reproduit une
+3e fois le 08-04 sur `seo/2026-08-04` → **au 08-05, cette branche est
+elle aussi absente du remote**, tout comme `seo/2026-08-03`
+(`git ls-remote --heads origin | grep seo` : seules `seo/2026-08-01` et
+`seo/2026-08-02` existent, toutes deux non mergées). Les mêmes 7
+formulations non conformes (sevrage, arrêt du tabac) sont toujours en
+ligne sur `main` au 08-05.
 
-**Ce n'est plus un simple délai de fusion humaine** (pattern habituel
-1-8 jours observé sur ce repo depuis fin juillet) : c'est un correctif
-qui **disparaît entièrement** après avoir été committé et soi-disant
-vérifié vert. Deux hypothèses non tranchées depuis ce contexte : échec
-de push spécifique à certains runs, ou branche supprimée après un
-merge qui n'aurait pourtant pas appliqué son contenu à `main`.
+**Ce n'est plus un délai de fusion humaine** : c'est soit un échec de
+push répété et spécifique aux runs 08-03/08-04 (jamais aux 08-01/08-02),
+soit ces deux runs n'ont en réalité produit aucun commit malgré ce
+qu'affirment leurs entrées de journal. Depuis ce contexte d'agent,
+impossible d'aller plus loin : pas de `GH_TOKEN`/`gh auth`, donc pas
+d'accès aux logs GitHub Actions ni à la liste des PR sur
+`craigbarns/theklope`.
 
-**Prochain run : vérifier d'abord si `seo/2026-08-04` (ou son contenu)
-est bien sur `main`** (`grep -n "sevrage\|arrêter de fumer"
-src/data/blog.js src/data/categorySeo.js`). Si les mêmes 7 occurrences
-sont de nouveau là, **ne pas reproduire mécaniquement une 4e fois** —
-consigner l'alerte de façon très visible et suggérer à un humain
-d'investiguer le pipeline (`agent-repo/.github/workflows/seo-agent.yml`,
-logs CI des runs 08-01/08-03/08-04) plutôt que de continuer à corriger
-un symptôme qui revient.
+**Décision prise le 08-05 : ne plus reproduire ce correctif à chaque run.**
+`seo/2026-08-01` et `seo/2026-08-02` portent déjà ce contenu exact, prêt à
+fusionner sans conflit — une 4e/5e branche identique n'apporte aucune
+valeur marginale et ne résout pas la cause racine. **Un humain doit
+investiguer en priorité** :
+1. Logs des jobs `seo-agent.yml` des 08-03 et 08-04 (étape « Livraison sur
+   theklope », en particulier `git push origin "$BRANCH" --force`).
+2. Pourquoi `seo/2026-08-01`/`seo/2026-08-02` restent ouvertes sans être
+   ni mergées ni fermées après 4-5 jours alors qu'elles fusionneraient
+   sans conflit.
+
+**Prochain run : revérifier l'état du remote avant toute décision**
+(`git ls-remote --heads origin | grep seo`, puis `grep -n "sevrage\|
+arrêter de fumer" src/data/blog.js src/data/categorySeo.js` sur `main`).
+Si `seo/2026-08-01`/`seo/2026-08-02` disparaissent aussi du remote, c'est
+un signal encore plus fort qu'un humain doit agir sur le pipeline avant
+tout nouveau run SEO — l'escalader de façon très visible plutôt que de
+continuer à corriger un symptôme qui revient.
 
 Point de vigilance permanent : `main` reçoit régulièrement du contenu
 d'autres processus/agents sans passer par ce journal — refaire un
@@ -34,7 +48,7 @@ d'autres processus/agents sans passer par ce journal — refaire un
 danger"` sur `blog.js`/`categorySeo.js`/`staticSeoPages.js` après tout
 nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
 
-## État réel sur `main` au 2026-08-04
+## État réel sur `main` au 2026-08-05
 
 - `src/data/blog.js` : maillage guide → page statique (3 liens inline)
   **recréé le 08-02** (voir JOURNAL) — traité, ne plus reprendre ce point
@@ -47,10 +61,18 @@ nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
 - `src/data/categorySeo.js` : `meilleures-ventes` **toujours à 117
   caractères** (sous la fourchette 140-160) lors du dernier contrôle
   (07-31), malgré plusieurs tentatives passées — non revérifié depuis.
-- `src/data/productGuides.js` : `GUIDES_BY_CATEGORY.ecig` listait 5
-  guides pour une limite d'affichage à 4 lors du dernier audit du 07-31
-  — non revérifié depuis, à confirmer avant de reprendre ce point (le
-  batch de contenu du 07-30 a pu changer la donne).
+- `src/data/productGuides.js` : `GUIDES_BY_CATEGORY.ecig` liste toujours
+  **5 guides pour une limite d'affichage à 4** — reconfirmé le 08-05 (le
+  5e, `erreurs-frequentes-debutant-vape`, reste invisible dans le bloc
+  « Guides utiles » des fiches produit `ecig`).
+- `src/data/blog.js` : **nouveau, repéré le 08-05** — les IDs produits
+  `xros-4-mini-269` (8 occurrences dans `relatedProductIds`) et
+  `pixo-aura-2-301` (2 occurrences) ne correspondent à aucun `id` réel
+  dans `src/data/products.js`. Ne casse ni le build ni les tests
+  (filtré silencieusement par `BlogPost.jsx`), mais prive ces guides
+  d'un produit associé attendu. IDs réels de kits pods compacts utilisés
+  à la place pour le nouveau guide du 08-05 :
+  `argus-g2-mini-1500mah-voopoo-offre-groupee-1-1-279`, `q16-pro-146`.
 - `src/data/staticSeoPages.js` : repéré en passant le 08-04 (non traité,
   hors sujet du jour) — la branche obsolète `seo/2026-08-01` contenait un
   changement de seuil de livraison gratuite 29€→49€ sur les pages
@@ -65,9 +87,12 @@ nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
       autres catégories.
 - [ ] `productGuides.js` : revérifier `GUIDES_BY_CATEGORY.ecig` vs.
       `limit` de `relatedGuidesForProduct()` (5 guides mappés pour une
-      limite à 4 lors du dernier contrôle) — soit retirer un guide, soit
+      limite à 4, reconfirmé le 08-05) — soit retirer un guide, soit
       adapter le `limit` pour cette catégorie spécifiquement.
-- [ ] Une fois le point ci-dessus clarifié, ajouter
+- [ ] IDs produits fantômes `xros-4-mini-269` / `pixo-aura-2-301` dans
+      `blog.js` (voir ci-dessus, repéré le 08-05) — remplacer par des IDs
+      réels dans les guides concernés.
+- [ ] Une fois le point `GUIDES_BY_CATEGORY.ecig` clarifié, ajouter
       `stockage-eliquides-batterie-vape` au maillage produit → guides
       (catégories `eliquide`/`ecig`/`pod`), sans dépasser la limite
       d'affichage effective.
@@ -81,10 +106,13 @@ nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
       `puffs-jetables` (132) sous 140 — probablement volontaire pour des
       gammes nichées, à confirmer avant de toucher. À regrouper avec
       d'autres écarts similaires plutôt qu'un commit dédié.
-- [ ] Rythme : dernier contenu créé le 07-30. Si les prochains runs
-      restent sur de l'optimisation/audit, repasser sur du contenu longue
-      traîne (priorité 1 de la mission) pour respecter le rythme
-      indicatif ~3 jours/semaine.
+- [ ] Rythme : contenu traité le 08-05 (guide voyage en avion,
+      `voyager-avion-cigarette-electronique`) après un écart de 6 jours
+      sans contenu long format (dernier avant : 07-30, les runs 08-01 à
+      08-04 ayant été des audits/reproductions du correctif de
+      conformité). Si les prochains runs reviennent sur de
+      l'optimisation/audit, garder en tête le rythme indicatif
+      ~3 jours/semaine de contenu.
 
 ## Technique
 
@@ -103,7 +131,9 @@ après un nouvel afflux de contenu non tracé dans ce journal.
       revérifier chaque affirmation du backlog/journal directement dans
       le code sur `main` avant d'agir, **y compris la conformité
       GUARDRAILS** du contenu ajouté par ces autres processus.
-- [ ] Suivre le sort de la branche `seo/2026-08-04` (3e reproduction du
-      correctif GUARDRAILS) — voir alerte pipeline en tête de ce fichier.
-      Si elle disparaît aussi, escalader vers un humain plutôt que de
-      reproduire une 4e fois.
+- [ ] Voir l'alerte pipeline en tête de ce fichier (mise à jour le
+      08-05) : `seo/2026-08-03` et `seo/2026-08-04` n'existent pas sur le
+      remote, `seo/2026-08-01`/`seo/2026-08-02` existent mais ne sont pas
+      mergées. Ne pas reproduire le correctif de conformité à chaque run
+      tant qu'un humain n'a pas investigué — revérifier l'état du remote
+      au prochain run avant toute décision.
