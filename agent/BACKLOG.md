@@ -3,44 +3,41 @@
 L'agent pioche ici et y ajoute ce qu'il repère. Retirer une ligne quand
 elle est traitée (la déplacer dans le JOURNAL).
 
-## 🚨 ALERTE PIPELINE — non résolue au 08-05, NE PAS reproduire le correctif mécaniquement
+## 🚨 ALERTE PIPELINE — cause racine trouvée le 08-06, action humaine requise
 
-Chronologie complète : correctif committé le 08-01 (branche
-`seo/2026-08-01`, commit `7bec44e`) → jamais mergé → reproduit le 08-03
-sur une nouvelle branche → **absente du remote au 08-04** → reproduit une
-3e fois le 08-04 sur `seo/2026-08-04` → **au 08-05, cette branche est
-elle aussi absente du remote**, tout comme `seo/2026-08-03`
-(`git ls-remote --heads origin | grep seo` : seules `seo/2026-08-01` et
-`seo/2026-08-02` existent, toutes deux non mergées). Les mêmes 7
-formulations non conformes (sevrage, arrêt du tabac) sont toujours en
-ligne sur `main` au 08-05.
+**Ce n'est pas un bug technique : c'est un goulot de revue humaine.**
+`craigbarns/theklope` est public, donc l'API REST GitHub est consultable
+sans jeton (`curl https://api.github.com/repos/craigbarns/theklope/pulls?state=all`).
+Elle montre que `agent-repo/.github/workflows/seo-agent.yml` tourne en
+`DELIVERY_MODE: pr` (mode par défaut, jamais basculé en `push` malgré le
+commentaire « après la période d'essai de 3 jours ») : chaque run crée une
+PR qui attend une fusion humaine, sans auto-merge. Dernier merge groupé
+humain : **2026-07-30T18:33:20Z** (PR #24, #38-#41, #43, #45, #11) — rien
+depuis. Résultat : PR **#46** (`seo/2026-07-31`), **#47**
+(`seo/2026-08-01`, contient le correctif de conformité sevrage/arrêt du
+tabac), **#48** (`seo/2026-08-02`) et **#50** (`seo/2026-08-05`) sont
+toutes **ouvertes** et toutes `mergeable: true` / `mergeable_state: clean`
+(aucun conflit) — prêtes à fusionner d'un clic sur
+`github.com/craigbarns/theklope/pull/47` (et 46/48/50).
 
-**Ce n'est plus un délai de fusion humaine** : c'est soit un échec de
-push répété et spécifique aux runs 08-03/08-04 (jamais aux 08-01/08-02),
-soit ces deux runs n'ont en réalité produit aucun commit malgré ce
-qu'affirment leurs entrées de journal. Depuis ce contexte d'agent,
-impossible d'aller plus loin : pas de `GH_TOKEN`/`gh auth`, donc pas
-d'accès aux logs GitHub Actions ni à la liste des PR sur
-`craigbarns/theklope`.
+**Action attendue d'un humain, priorité absolue** : fusionner la PR #47
+pour corriger l'écart GUARDRAILS en ligne depuis le 08-01. Fusionner aussi
+#46/#48/#50 (contenu SEO légitime en attente). Ensuite, décider en
+connaissance de cause : garder `DELIVERY_MODE: pr` avec une cadence de
+revue régulière, ou repasser à `push` si les vérifications automatiques
+(build/tests/liens, toutes vertes à chaque run) sont jugées suffisantes.
 
-**Décision prise le 08-05 : ne plus reproduire ce correctif à chaque run.**
-`seo/2026-08-01` et `seo/2026-08-02` portent déjà ce contenu exact, prêt à
-fusionner sans conflit — une 4e/5e branche identique n'apporte aucune
-valeur marginale et ne résout pas la cause racine. **Un humain doit
-investiguer en priorité** :
-1. Logs des jobs `seo-agent.yml` des 08-03 et 08-04 (étape « Livraison sur
-   theklope », en particulier `git push origin "$BRANCH" --force`).
-2. Pourquoi `seo/2026-08-01`/`seo/2026-08-02` restent ouvertes sans être
-   ni mergées ni fermées après 4-5 jours alors qu'elles fusionneraient
-   sans conflit.
+**Anomalie distincte, encore non expliquée** : aucune PR/branche n'existe
+pour `seo/2026-08-03` et `08-04` (contrairement aux autres jours qui ont
+bien produit une PR, juste non fusionnée). Pas de piste solide depuis ce
+contexte agent (pas d'accès aux logs GitHub Actions) — à corréler avec les
+logs des runs de ces deux jours si un humain y a accès.
 
-**Prochain run : revérifier l'état du remote avant toute décision**
-(`git ls-remote --heads origin | grep seo`, puis `grep -n "sevrage\|
-arrêter de fumer" src/data/blog.js src/data/categorySeo.js` sur `main`).
-Si `seo/2026-08-01`/`seo/2026-08-02` disparaissent aussi du remote, c'est
-un signal encore plus fort qu'un humain doit agir sur le pipeline avant
-tout nouveau run SEO — l'escalader de façon très visible plutôt que de
-continuer à corriger un symptôme qui revient.
+**Prochain run** : si la PR #47 (ou une autre PR de conformité) est
+toujours ouverte, ne pas la reproduire une nouvelle fois — le contenu est
+déjà prêt. Revérifier simplement l'état (`grep` conformité sur `main`,
+liste des PR ouvertes) et continuer de le documenter tant que ce n'est pas
+fusionné.
 
 Point de vigilance permanent : `main` reçoit régulièrement du contenu
 d'autres processus/agents sans passer par ce journal — refaire un
@@ -48,7 +45,7 @@ d'autres processus/agents sans passer par ce journal — refaire un
 danger"` sur `blog.js`/`categorySeo.js`/`staticSeoPages.js` après tout
 nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
 
-## État réel sur `main` au 2026-08-05
+## État réel sur `main` au 2026-08-06
 
 - `src/data/blog.js` : maillage guide → page statique (3 liens inline)
   **recréé le 08-02** (voir JOURNAL) — traité, ne plus reprendre ce point
@@ -65,14 +62,11 @@ nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
   **5 guides pour une limite d'affichage à 4** — reconfirmé le 08-05 (le
   5e, `erreurs-frequentes-debutant-vape`, reste invisible dans le bloc
   « Guides utiles » des fiches produit `ecig`).
-- `src/data/blog.js` : **nouveau, repéré le 08-05** — les IDs produits
-  `xros-4-mini-269` (8 occurrences dans `relatedProductIds`) et
-  `pixo-aura-2-301` (2 occurrences) ne correspondent à aucun `id` réel
-  dans `src/data/products.js`. Ne casse ni le build ni les tests
-  (filtré silencieusement par `BlogPost.jsx`), mais prive ces guides
-  d'un produit associé attendu. IDs réels de kits pods compacts utilisés
-  à la place pour le nouveau guide du 08-05 :
-  `argus-g2-mini-1500mah-voopoo-offre-groupee-1-1-279`, `q16-pro-146`.
+- `src/data/blog.js` : IDs produits fantômes `xros-4-mini-269` /
+  `pixo-aura-2-301` (repérés le 08-05) **corrigés le 08-06** — remplacés
+  par `q16-pro-146` / `pocke-x-144` dans les 10 occurrences concernées.
+  Traité, ne plus reprendre sauf nouvelle régression constatée par
+  `grep -n "xros-4-mini-269\|pixo-aura-2-301" src/data/blog.js`.
 - `src/data/staticSeoPages.js` : repéré en passant le 08-04 (non traité,
   hors sujet du jour) — la branche obsolète `seo/2026-08-01` contenait un
   changement de seuil de livraison gratuite 29€→49€ sur les pages
@@ -89,9 +83,12 @@ nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
       `limit` de `relatedGuidesForProduct()` (5 guides mappés pour une
       limite à 4, reconfirmé le 08-05) — soit retirer un guide, soit
       adapter le `limit` pour cette catégorie spécifiquement.
-- [ ] IDs produits fantômes `xros-4-mini-269` / `pixo-aura-2-301` dans
-      `blog.js` (voir ci-dessus, repéré le 08-05) — remplacer par des IDs
-      réels dans les guides concernés.
+- [ ] Contenu, repéré le 08-06 en corrigeant les IDs fantômes ci-dessus :
+      le guide `xros-5-vs-xros-pro-comparatif` compare des produits
+      Vaporesso XROS absents du catalogue THEKLOPE (aucun `id` contenant
+      « xros » dans `products.js`) — à revoir dans un futur passage
+      contenu (comparaison de pods réellement en catalogue, ou
+      dépublication).
 - [ ] Une fois le point `GUIDES_BY_CATEGORY.ecig` clarifié, ajouter
       `stockage-eliquides-batterie-vape` au maillage produit → guides
       (catégories `eliquide`/`ecig`/`pod`), sans dépasser la limite
@@ -118,10 +115,12 @@ nouvel afflux de contenu externe, même hors du rythme d'audit habituel.
 
 Audit complet le 2026-07-31 (build, tests, liens, longueurs
 titres/meta) — voir JOURNAL pour le détail. Audit ciblé conformité
-GUARDRAILS refait le 2026-08-01, 08-03 et 08-04 (voir alerte pipeline en
-tête de ce fichier — le correctif ne tient pas sur `main`). Refaire un
-audit technique complet (pas seulement conformité) dans ~1 semaine ou
-après un nouvel afflux de contenu non tracé dans ce journal.
+GUARDRAILS refait le 2026-08-01, 08-03, 08-04 et 08-05 (voir alerte
+pipeline en tête de ce fichier — le correctif attend une fusion humaine
+dans la PR #47, ce n'est plus un mystère technique depuis le 08-06).
+Refaire un audit technique complet (pas seulement conformité) dans
+~1 semaine ou après un nouvel afflux de contenu non tracé dans ce
+journal.
 
 ## À vérifier
 
@@ -132,8 +131,8 @@ après un nouvel afflux de contenu non tracé dans ce journal.
       le code sur `main` avant d'agir, **y compris la conformité
       GUARDRAILS** du contenu ajouté par ces autres processus.
 - [ ] Voir l'alerte pipeline en tête de ce fichier (mise à jour le
-      08-05) : `seo/2026-08-03` et `seo/2026-08-04` n'existent pas sur le
-      remote, `seo/2026-08-01`/`seo/2026-08-02` existent mais ne sont pas
-      mergées. Ne pas reproduire le correctif de conformité à chaque run
-      tant qu'un humain n'a pas investigué — revérifier l'état du remote
-      au prochain run avant toute décision.
+      08-06) : la cause racine est identifiée (revue humaine des PR, pas
+      un bug de push) et la PR #47 est prête à fusionner. Ne pas
+      reproduire le correctif de conformité tant qu'elle est ouverte —
+      revérifier son état (fusionnée ou toujours ouverte) au prochain
+      run avant toute décision.

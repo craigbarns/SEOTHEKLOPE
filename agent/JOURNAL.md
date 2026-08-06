@@ -12,6 +12,96 @@ entrées passées.
 - **Fichiers** : liste des fichiers touchés dans theklope
 - **Suite** : ce que le prochain run devrait envisager
 
+### 2026-08-06 — [type : optimisation]
+- **🔎 Cause racine de l'alerte pipeline enfin identifiée — ce n'est pas un
+  bug de push, c'est un blocage de revue humaine** : avant de choisir une
+  tâche, revérifié l'état du remote (`git ls-remote --heads origin | grep
+  seo` : `seo/2026-08-01`, `02` et `05` toujours présentes, `03`/`04`
+  toujours absentes — inchangé depuis le 08-05) et la conformité sur
+  `main` (`grep` sevrage/arrêter de fumer sur `blog.js`/`categorySeo.js` :
+  toujours les 7 mêmes occurrences). Nouveauté : `craigbarns/theklope`
+  étant public, l'API REST GitHub est accessible **sans authentification**
+  (`curl https://api.github.com/repos/craigbarns/theklope/pulls?state=all`)
+  — jusqu'ici aucun run n'avait essayé cette voie faute de `gh auth`. Deux
+  découvertes majeures :
+  1. `agent-repo/.github/workflows/seo-agent.yml` a `DELIVERY_MODE: pr`
+     (mode par défaut), avec le commentaire « Passer à "push" ici après la
+     période d'essai de 3 jours » — jamais fait. En mode `pr`, chaque run
+     crée une PR qui **attend une fusion humaine**, il n'y a aucun
+     mécanisme d'auto-merge. Ce n'était donc pas un push cassé mais un
+     goulot d'étranglement de revue.
+  2. La liste des PR (`.../pulls?state=all`) montre un **merge groupé
+     humain le 2026-07-30T18:33:20Z** (PR #24, #38–#41, #43, #45, #11) —
+     et plus aucune fusion depuis. Les PR #46 (`seo/2026-07-31`), #47
+     (`seo/2026-08-01`, contient le correctif de conformité), #48
+     (`seo/2026-08-02`) et #50 (`seo/2026-08-05`) sont **toutes ouvertes**,
+     et toutes affichent `mergeable: true` / `mergeable_state: clean`
+     (vérifié via `GET /repos/craigbarns/theklope/pulls/{46,47,48,50}`) —
+     donc **aucun conflit, prêtes à fusionner d'un clic**. Aucune PR
+     n'existe pour `seo/2026-08-03`/`08-04` (anomalie distincte : ces
+     jours-là le run n'a produit ni branche ni PR — cause encore inconnue,
+     mais sans rapport avec le mécanisme de push/merge lui-même).
+  - **Conclusion actionnable pour un humain** : fusionner la PR #47
+    (https://github.com/craigbarns/theklope/pull/47) résout l'écart
+    GUARDRAILS immédiatement, sans nouveau travail de l'agent — le
+    correctif y est déjà, vert, sans conflit. Fusionner aussi #46/#48/#50
+    au passage (contenu SEO légitime en attente). Décision indépendante à
+    prendre par l'humain : garder le mode `pr` (revue systématique) et
+    mettre en place une cadence de fusion régulière, ou repasser
+    `DELIVERY_MODE` à `push` si la confiance dans les vérifications
+    automatiques (build/tests/liens) est jugée suffisante.
+  - Conformément à la décision du 08-05, **je n'ai pas recommis le
+    correctif de conformité une 5e fois** : il est déjà prêt et vert dans
+    la PR #47, une nouvelle branche identique n'apporterait rien.
+- **Fait** : à la place, traité un point d'optimisation du backlog repéré
+  le 08-05 : dans `src/data/blog.js`, remplacé les IDs produits fantômes
+  `xros-4-mini-269` (8 occurrences dans `relatedProductIds`, sur 8 guides)
+  et `pixo-aura-2-301` (2 occurrences) — aucun des deux ne correspond à un
+  `id` réel de `src/data/products.js`, ils étaient filtrés silencieusement
+  par `BlogPost.jsx`, privant ces guides de leur maillage produit associé.
+  Remplacés uniformément par deux kits pods compacts réels et en stock :
+  `q16-pro-146` (Q16 PRO Justfog, 39,90€, stock 113) et `pocke-x-144`
+  (POCKE X, 39,90€, stock 120), cohérents avec le profil « pod compact/
+  débutant » évoqué dans ces guides (y compris `xros-5-vs-xros-pro-
+  comparatif`, qui reste par ailleurs un guide comparant des produits
+  Vaporesso XROS non vendus par la boutique — problème de fond distinct,
+  déjà repéré, non traité aujourd'hui, voir Suite).
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Point de maillage
+  interne cassé identifié et documenté le 08-05 (priorité 2 de la
+  mission : optimisation catégories/produits, maillage interne), non
+  traité ce jour-là faute de temps sur un seul sujet par run.
+- **Fichiers** : `src/data/blog.js`, `public/llms-full.txt` (régénéré par
+  le build)
+- **Vérifié** : `npm ci`, `npm run build` (408 pages pré-rendues : 308
+  produits, 45 catégories, 35 articles, 20 pages statiques), `npm test`
+  (197/197), `node scripts/crawl-links.mjs` (0 lien cassé / 7830
+  vérifiés) — tous verts.
+- **Suite** :
+  1. **Priorité pour un humain** : fusionner la PR #47 (correctif de
+     conformité, clean/mergeable) — et idéalement #46/#48/#50 — sur
+     `github.com/craigbarns/theklope`. Une fois fait, revérifier au
+     prochain run avec le `grep` habituel que `main` est bien conforme.
+  2. Anomalie distincte à surveiller : pourquoi `seo/2026-08-03` et
+     `08-04` n'ont produit aucune branche/PR (contrairement au simple
+     goulot de revue humaine qui explique 07-31/08-01/08-02/08-05) —
+     pas d'hypothèse solide depuis ce contexte agent, à corréler avec les
+     logs du run GitHub Actions de ces deux jours si un humain y a accès.
+  3. Contenu, non traité aujourd'hui : le guide `xros-5-vs-xros-pro-
+     comparatif` compare des produits Vaporesso XROS qui ne sont pas au
+     catalogue THEKLOPE (aucun `id` contenant « xros » dans
+     `products.js`) — au-delà du simple lien produit cassé corrigé
+     aujourd'hui, le contenu lui-même promet une comparaison de produits
+     non vendus en boutique ; à revoir dans un futur passage contenu
+     (remplacer par une comparaison de pods réellement en catalogue, ou
+     dépublier).
+  4. Items backlog non revérifiés aujourd'hui (un seul sujet par run) :
+     `categorySeo.js` `meilleures-ventes` (117 caractères au dernier
+     contrôle), `productGuides.js` `GUIDES_BY_CATEGORY.ecig` (5 guides
+     pour un `limit` par défaut de 4), titre/meta
+     `quelle-cigarette-electronique-choisir`.
+
+---
+
 ### 2026-08-05 — [type : contenu]
 - **⚠️ Alerte pipeline confirmée et aggravée, correctif de conformité NON
   reproduit aujourd'hui (décision volontaire)** : avant de choisir une
