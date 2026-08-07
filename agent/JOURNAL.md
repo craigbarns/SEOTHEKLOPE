@@ -12,6 +12,72 @@ entrées passées.
 - **Fichiers** : liste des fichiers touchés dans theklope
 - **Suite** : ce que le prochain run devrait envisager
 
+### 2026-08-07 — [type : optimisation]
+- **Pipeline toujours bloqué, revérifié avant de choisir une tâche — pas de
+  nouvelle reproduction du correctif de conformité** : `curl
+  https://api.github.com/repos/craigbarns/theklope/pulls?state=all` montre
+  **6 PR SEO ouvertes et non fusionnées** : #46 (`seo/2026-07-31`), #47
+  (`seo/2026-08-01`, correctif conformité), #48 (`seo/2026-08-02`), #50
+  (`seo/2026-08-05`), #51 (`seo/2026-08-06`, correctif IDs produits
+  fantômes) — toutes avec `mergeable: true` / `mergeable_state: clean`
+  vérifié individuellement (`GET /pulls/{n}`) sur la base de `main`
+  actuel. `DELIVERY_MODE` dans `agent-repo/.github/workflows/seo-agent.yml`
+  est toujours `pr`. Confirmé sur `main` (`879bdf6`) : les violations
+  GUARDRAILS (sevrage/arrêter de fumer) sont **toujours live**, à
+  `src/data/categorySeo.js:109,117` et `src/data/blog.js:1117,1133,1200,
+  1207,1225,1394` — j'ai comparé ligne à ligne le patch de la PR #47
+  (`GET /pulls/47/files`) avec le contenu actuel de `main` : **le patch
+  s'applique exactement aux lignes actuelles**, sans dérive depuis le
+  07-31. Fusionner la PR #47 aujourd'hui suffirait donc à résoudre
+  entièrement l'écart de conformité, sans travail agent supplémentaire.
+  Élément clarifié : le mystère du 08-06 (« les IDs fantômes corrigés
+  reviennent ») n'en est pas un — la correction du 08-06 est dans la PR
+  **#51, jamais fusionnée**, donc `main` n'a jamais reçu le correctif ;
+  `grep -n "xros-4-mini-269\|pixo-aura-2-301" src/data/blog.js` sur `main`
+  remonte toujours les 8+2 occurrences d'origine. Conformément à la
+  décision des runs précédents (08-05, 08-06), **je n'ai pas recréé de
+  6e branche identique** pour la conformité ni de 2e branche pour les IDs
+  fantômes : les deux correctifs existent déjà, verts et sans conflit,
+  dans des PR ouvertes.
+- **Fait** : traité un point différent du backlog, resté non traité depuis
+  sa découverte le 08-05 : dans `src/data/productGuides.js`,
+  `GUIDES_BY_CATEGORY.ecig` listait 5 guides
+  (`quelle-cigarette-electronique-choisir`, `pod-ou-cigarette-electronique`,
+  `autonomie-cigarette-electronique`, `entretenir-kit-classique-box`,
+  `erreurs-frequentes-debutant-vape`) alors que `relatedGuidesForProduct()`
+  s'arrête au 4e (`limit = 4`, appelé sans override dans
+  `src/pages/Product.jsx`). Vérifié que les 4 premiers slugs existent bien
+  dans `BLOG_POSTS` (`grep -c "slug: '...'"` → 1 pour chacun), donc le 5e
+  n'apparaissait jamais dans le bloc « Guides utiles » des fiches produit
+  catégorie `ecig` — maillage interne cassé silencieusement, confirmé (pas
+  supposé). Retiré `erreurs-frequentes-debutant-vape` de la liste `ecig`
+  pour revenir à 4 guides, alignée sur toutes les autres catégories du
+  fichier (aucune ne dépasse 4). Ce guide reste maillé ailleurs (catégorie
+  `pack` et `FALLBACK_GUIDE_SLUGS`).
+- **Pourquoi** : `gsc-data.json` toujours vide (`{}`). Priorité 2 de la
+  mission (optimisation catégories/produits, maillage interne) ; point
+  déjà identifié et documenté les 08-05/08-06 mais jamais corrigé faute de
+  temps sur un seul sujet par run.
+- **Fichiers** : `src/data/productGuides.js`
+- **Vérifié** : `npm ci`, `npm run build` (408 pages pré-rendues), `npm
+  test` (197/197), `node scripts/crawl-links.mjs` (0 lien cassé / 7830
+  vérifiés) — tous verts. Commit local `63e250f` sur `site` (non poussé,
+  le workflow s'en charge).
+- **Suite** :
+  1. **Priorité pour un humain, inchangée** : fusionner en priorité la PR
+     #47 (conformité, https://github.com/craigbarns/theklope/pull/47),
+     idéalement aussi #46/#48/#50/#51 — toutes clean/mergeable sur `main`
+     actuel, aucun travail agent supplémentaire requis.
+  2. Items backlog non revérifiés aujourd'hui (un seul sujet par run) :
+     `categorySeo.js` `meilleures-ventes` (117 caractères au dernier
+     contrôle, sous 140-160), titre/meta
+     `quelle-cigarette-electronique-choisir`, guide
+     `xros-5-vs-xros-pro-comparatif` qui compare des produits Vaporesso
+     XROS absents du catalogue THEKLOPE, statistique non sourcée dans
+     `top-10-meilleurs-eliquides` (« 70% des débutants »).
+  3. Anomalie distincte toujours non expliquée : aucune branche/PR pour
+     `seo/2026-08-03` et `08-04` — sans piste depuis ce contexte agent.
+
 ### 2026-08-06 — [type : optimisation]
 - **🔎 Cause racine de l'alerte pipeline enfin identifiée — ce n'est pas un
   bug de push, c'est un blocage de revue humaine** : avant de choisir une
